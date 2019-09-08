@@ -64,9 +64,11 @@ namespace ImageResizer.Plugins.AutoCrop
                     var dimension = (int)((aspectCorrectedBox.Width + aspectCorrectedBox.Height) * 0.25f); 
                     var paddingX = GetPadding(settings.PadX, dimension);
                     var paddingY = GetPadding(settings.PadY, dimension);
-                    
+
                     var paddedBox = ExpandRectangle(analyzer.BoundingBox, paddingX, paddingY, bitmap.Width, bitmap.Height);
-                    var constrainedBox = GetConstrainedAspect(paddedBox, bitmap.Width, bitmap.Height);
+                    var targetSize = GetSize(state, bitmap);
+                    var targetAspect = targetSize.Width / (float) targetSize.Height;
+                    var constrainedBox = GetConstrainedAspect(paddedBox, targetAspect, bitmap.Width, bitmap.Height);
 
                     if (settings.Debug)
                     {
@@ -141,21 +143,25 @@ namespace ImageResizer.Plugins.AutoCrop
 
         protected Rectangle GetConstrainedAspect(Rectangle rectangle, int width, int height)
         {
-            var oa = width / (float)height;
+            return GetConstrainedAspect(rectangle, width / (float) height, width, height);
+        }
+
+        protected Rectangle GetConstrainedAspect(Rectangle rectangle, float aspect, int width, int height)
+        {
             var ta = rectangle.Width / (float)rectangle.Height;
 
-            if (Math.Abs(oa - ta) < 0.01f)
+            if (Math.Abs(aspect - ta) < 0.01f)
                 return rectangle;
 
-            if (oa > ta)
+            if (aspect > ta)
             {
-                var iw = rectangle.Height * oa;
+                var iw = rectangle.Height * aspect;
                 var p = (int) Math.Ceiling((iw - rectangle.Width) * 0.5f);
                 return ExpandRectangle(rectangle, p, 0, width, height);
             }
             else
             {
-                var ih = rectangle.Width / oa;
+                var ih = rectangle.Width / aspect;
                 var p = (int) Math.Ceiling((ih - rectangle.Height) * 0.5f);
                 return ExpandRectangle(rectangle, 0, p, width, height);
             }
@@ -186,6 +192,22 @@ namespace ImageResizer.Plugins.AutoCrop
             if (setting == null) return false;
 
             return true;
+        }
+
+        protected Size GetSize(ImageState state, Bitmap bitmap)
+        {
+            var originalSize = new Size(bitmap.Width, bitmap.Height);
+
+            var w = state.settings["width"];
+            var h = state.settings["height"];
+
+            if (w == null || !int.TryParse(w, out var width))
+                return originalSize;
+
+            if (h == null || !int.TryParse(h, out var height))
+                return originalSize;
+
+            return new Size(width, height);
         }
 
         protected AutoCropSettings GetSettings(ImageState state)
