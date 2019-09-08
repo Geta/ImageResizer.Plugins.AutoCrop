@@ -61,18 +61,18 @@ namespace ImageResizer.Plugins.AutoCrop
                 {
                     var aspectCorrectedBox = GetConstrainedAspect(analyzer.BoundingBox, bitmap.Width, bitmap.Height);
 
-                    var dimension = (int)((aspectCorrectedBox.Width + aspectCorrectedBox.Height) * 0.25f); 
+                    var dimension = (int)((aspectCorrectedBox.Width + aspectCorrectedBox.Height) * 0.25f);
                     var paddingX = GetPadding(settings.PadX, dimension);
                     var paddingY = GetPadding(settings.PadY, dimension);
 
                     var paddedBox = ExpandRectangle(analyzer.BoundingBox, paddingX, paddingY, bitmap.Width, bitmap.Height);
-                    var targetSize = GetSize(state, bitmap);
-                    var targetAspect = targetSize.Width / (float) targetSize.Height;
-                    var constrainedBox = GetConstrainedAspect(paddedBox, targetAspect, bitmap.Width, bitmap.Height);
+                    var destinationSize = GetDestinationSize(state, bitmap);
+                    var destinationAspect = destinationSize.Width / (float) destinationSize.Height;
+                    var constrainedBox = GetConstrainedAspect(paddedBox, destinationAspect, bitmap.Width, bitmap.Height);
 
                     if (settings.Debug)
                     {
-                        state.Data[DebugKey] = analyzer.BoundingBox;                        
+                        state.Data[DebugKey] = analyzer.BoundingBox;
                     }
                     else
                     {
@@ -194,7 +194,7 @@ namespace ImageResizer.Plugins.AutoCrop
             return true;
         }
 
-        protected Size GetSize(ImageState state, Bitmap bitmap)
+        protected Size GetDestinationSize(ImageState state, Bitmap bitmap)
         {
             var originalSize = new Size(bitmap.Width, bitmap.Height);
 
