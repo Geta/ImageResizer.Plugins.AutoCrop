@@ -38,11 +38,11 @@ Plugin unlocks the ability to use the following query parameters for images
 
 | Parameter | Description | Example |
 | --------- | ----------- | ------- |
-| autoCrop | activates the plugin with the provided values (separated by ,;|) | _?autoCrop=10_ or _?autoCrop=10;20;30_ |
+| autoCrop | activates the plugin with the provided values | _?autoCrop=10_ or _?autoCrop=10;20;30_ |
 | _x-padding_ | the first provided parameter value | 10 |
-| _y-padding_ | the second provided parameter value | 10;_20_; |
+| _y-padding_ | the second provided parameter value | 10;_20_ |
 | _threshold_ | the third provided parameter value, background color deviation threshold | 10;20;_30_ |
-| autoCropDebug | displays a debug visualisation of how the plugin evaluated instead of cropping | _?autoCrop=10&autoCropDebug=1_ |
+| autoCropDebug | displays a debug visualisation of how the plugin evaluated instead of cropping | _?autoCropDebug=1_ |
 
 ## Package maintainer
 
