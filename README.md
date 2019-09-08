@@ -6,7 +6,7 @@ Automatic cropping for images with a flat background.
 Works with ImageResizer.NET 4.0.5 and above.
 
 Uses a relative luminance tolerance bounding box to determine which area to crop.
-Preserves original aspect ratio or image.
+Fits image to output image dimensions.
 
 ## Features
 
