@@ -35,7 +35,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             var s = bitmap.Stride;
             var s0 = (byte*)bitmap.Scan0;
 
-            var colors = new Dictionary<Color, int>();
+            var colors = new Dictionary<Color, int>(threshold);
 
             unchecked
             {
@@ -58,6 +58,9 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     {
                         colors.Add(c, 1);
                     }
+
+                    if (colors.Count >= threshold)
+                        return new BorderAnalysisResult(colors, threshold);
                 }
 
                 for (var y = 0; y < h; y++)
@@ -79,6 +82,9 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     {
                         colors.Add(c, 1);
                     }
+
+                    if (colors.Count >= threshold)
+                        return new BorderAnalysisResult(colors, threshold);
                 }
 
                 for (var x = 0; x < w; x++)
@@ -100,6 +106,9 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     {
                         colors.Add(c, 1);
                     }
+
+                    if (colors.Count >= threshold)
+                        return new BorderAnalysisResult(colors, threshold);
                 }
 
                 for (var x = 0; x < w; x++)
@@ -111,7 +120,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     var g = row[p + 1];
                     var r = row[p + 2];
 
-                    var c = Color.FromArgb( r, g, b);
+                    var c = Color.FromArgb(r, g, b);
 
                     if (colors.ContainsKey(c))
                     {
@@ -121,6 +130,9 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     {
                         colors.Add(c, 1);
                     }
+
+                    if (colors.Count >= threshold)
+                        return new BorderAnalysisResult(colors, threshold);
                 }
             }
             
@@ -134,7 +146,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             var s = bitmap.Stride;
             var s0 = (byte*)bitmap.Scan0;
 
-            var colors = new Dictionary<Color, int>();
+            var colors = new Dictionary<Color, int>(threshold);
 
             unchecked
             {
@@ -158,6 +170,9 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     {
                         colors.Add(c, 1);
                     }
+
+                    if (colors.Count >= threshold)
+                        return new BorderAnalysisResult(colors, threshold);
                 }
 
                 for (var y = 0; y < h; y++)
@@ -180,6 +195,9 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     {
                         colors.Add(c, 1);
                     }
+
+                    if (colors.Count >= threshold)
+                        return new BorderAnalysisResult(colors, threshold);
                 }
 
                 for (var x = 0; x < w; x++)
@@ -202,6 +220,9 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     {
                         colors.Add(c, 1);
                     }
+
+                    if (colors.Count >= threshold)
+                        return new BorderAnalysisResult(colors, threshold);
                 }
 
                 for (var x = 0; x < w; x++)
@@ -224,6 +245,9 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     {
                         colors.Add(c, 1);
                     }
+
+                    if (colors.Count >= threshold)
+                        return new BorderAnalysisResult(colors, threshold);
                 }
             }
             
