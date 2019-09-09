@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.4]
+
+### Fixed
+- Faulty tolerance calculation when validating rectangle
+
 ## [1.1.3]
 
 ### Fixed
