@@ -117,14 +117,14 @@ namespace ImageResizer.Plugins.AutoCrop
                 {
                     graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-                    using (var pen = new Pen(Color.Red, 2))
-                    {
-                        graphics.DrawRectangle(pen, (Rectangle)state.Data[DebugKey]);
-                    }
-
                     using (var pen = new Pen(Color.CornflowerBlue, 2))
                     {
                         graphics.DrawRectangle(pen, (Rectangle)state.Data[DataKey]);
+                    }
+
+                    using (var pen = new Pen(Color.Red, 2))
+                    {
+                        graphics.DrawRectangle(pen, (Rectangle)state.Data[DebugKey]);
                     }
                 }
             }

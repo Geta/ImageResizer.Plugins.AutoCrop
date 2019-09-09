@@ -147,9 +147,9 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     var g = row[p + 1];
                     var r = row[p + 2];
                     var a = row[p + 3];
-
-                    var c = Color.FromArgb(a, r, g, b);
-
+                    
+                    var c = a == 0 ? Color.Transparent : Color.FromArgb(a, r, g, b);
+                    
                     if (colors.ContainsKey(c))
                     {
                         colors[c]++;
