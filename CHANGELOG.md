@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.3]
+
+### Fixed
+- Alpha problem when evaluating transparent colors against blacks
+- Resolved a bug with negative size bounding boxes
+
 ## [1.1.2]
 
 ### Fixed

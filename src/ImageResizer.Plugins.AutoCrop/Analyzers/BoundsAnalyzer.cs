@@ -30,8 +30,24 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     BoundingBox = GetBoundingBoxForContentArgb(bitmap, borderAnalyzer.BackgroundColor, threshold);
                 }
 
-                FoundBoundingBox = !imageBox.Equals(BoundingBox);
+                FoundBoundingBox = ValidateRectangle(BoundingBox, imageBox, threshold);
             }
+        }
+
+        private bool ValidateRectangle(Rectangle rectangle, Rectangle image, int threshold)
+        {
+            if (rectangle == null) return false;
+            if (rectangle.Width < 1) return false;
+            if (rectangle.Height < 1)  return false;
+            if (image.Equals(rectangle)) return false;
+
+            var t = 1.0 - threshold * 0.01;
+            var tw = image.Width * t;
+            var th = image.Height * t;
+
+            if (rectangle.Width > tw && rectangle.Height > th) return false;
+
+            return true;
         }
 
         private unsafe Rectangle GetBoundingBoxForContentRgb(BitmapData bitmap, Color backgroundColor, int threshold)
@@ -112,6 +128,11 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                         var rd = Math.Abs(r - backgroundColor.R) * a;
 
                         if (0.299 * rd + 0.587 * gd + 0.114 * bd <= threshold)
+                            continue;
+
+                        var ad = Math.Abs(row[p + 3] - backgroundColor.A);
+
+                        if (ad < threshold)
                             continue;
 
                         if (x < xn) xn = x;
