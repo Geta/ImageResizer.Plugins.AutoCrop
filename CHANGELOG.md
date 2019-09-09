@@ -2,12 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.1]
+## [1.1.1]
+
+### Changed
+- Changed border edge handling to prioritize centering
+- Lowered .NET Framework version from 4.6.1 to 4.5
+
+## [1.1.0]
 
 ### Added
-- Fixed a conflict with strong name signing
+- Added alpha channel support
+
+## [1.0.1]
+
+### Fixed
+- Fixed conflict with strong name signing
 
 ## [1.0.0]
 
 ### Added
-- Initial implementation
+- Added initial implementation

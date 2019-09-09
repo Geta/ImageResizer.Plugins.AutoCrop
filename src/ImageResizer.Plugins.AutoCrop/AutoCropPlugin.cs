@@ -5,6 +5,7 @@ using System.Drawing.Imaging;
 using System.Collections.Generic;
 using ImageResizer.Configuration;
 using ImageResizer.Plugins.AutoCrop.Analyzers;
+using ImageResizer.Plugins.AutoCrop.Extensions;
 using ImageResizer.Plugins.AutoCrop.Models;
 using ImageResizer.Resizing;
 
@@ -39,9 +40,6 @@ namespace ImageResizer.Plugins.AutoCrop
         
         protected override RequestedAction LayoutImage(ImageState state)
         {
-            var action = base.PostLayoutImage(state);
-            if (action == RequestedAction.Cancel) return RequestedAction.Cancel;
-
             var enabled = DetermineEnabled(state);
             if (!enabled) return RequestedAction.None;
 
@@ -59,16 +57,16 @@ namespace ImageResizer.Plugins.AutoCrop
 
                 if (analyzer.FoundBoundingBox)
                 {
-                    var aspectCorrectedBox = GetConstrainedAspect(analyzer.BoundingBox, bitmap.Width, bitmap.Height);
+                    var aspectCorrectedBox = analyzer.BoundingBox.ConstrainAspect(bitmap.Width, bitmap.Height);
 
                     var dimension = (int)((aspectCorrectedBox.Width + aspectCorrectedBox.Height) * 0.25f);
                     var paddingX = GetPadding(settings.PadX, dimension);
                     var paddingY = GetPadding(settings.PadY, dimension);
 
-                    var paddedBox = ExpandRectangle(analyzer.BoundingBox, paddingX, paddingY, bitmap.Width, bitmap.Height);
+                    var paddedBox = analyzer.BoundingBox.Expand(paddingX, paddingY, bitmap.Width, bitmap.Height);
                     var destinationSize = GetDestinationSize(state, bitmap);
                     var destinationAspect = destinationSize.Width / (float) destinationSize.Height;
-                    var constrainedBox = GetConstrainedAspect(paddedBox, destinationAspect, bitmap.Width, bitmap.Height);
+                    var constrainedBox = paddedBox.ConstrainAspect(destinationAspect, bitmap.Width, bitmap.Height);
 
                     if (settings.Debug)
                     {
@@ -117,14 +115,14 @@ namespace ImageResizer.Plugins.AutoCrop
                 {
                     graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-                    using (var pen = new Pen(Color.Red, 2))
-                    {
-                        graphics.DrawRectangle(pen, (Rectangle)state.Data[DebugKey]);
-                    }
-
                     using (var pen = new Pen(Color.CornflowerBlue, 2))
                     {
                         graphics.DrawRectangle(pen, (Rectangle)state.Data[DataKey]);
+                    }
+
+                    using (var pen = new Pen(Color.Red, 2))
+                    {
+                        graphics.DrawRectangle(pen, (Rectangle)state.Data[DebugKey]);
                     }
                 }
             }
@@ -139,45 +137,6 @@ namespace ImageResizer.Plugins.AutoCrop
         protected int GetPadding(int percentage, int dimension)
         {
             return (int) Math.Ceiling(dimension * percentage * 0.01f);
-        }
-
-        protected Rectangle GetConstrainedAspect(Rectangle rectangle, int width, int height)
-        {
-            return GetConstrainedAspect(rectangle, width / (float) height, width, height);
-        }
-
-        protected Rectangle GetConstrainedAspect(Rectangle rectangle, float aspect, int width, int height)
-        {
-            var ta = rectangle.Width / (float)rectangle.Height;
-
-            if (Math.Abs(aspect - ta) < 0.01f)
-                return rectangle;
-
-            if (aspect > ta)
-            {
-                var iw = rectangle.Height * aspect;
-                var p = (int) Math.Ceiling((iw - rectangle.Width) * 0.5f);
-                return ExpandRectangle(rectangle, p, 0, width, height);
-            }
-            else
-            {
-                var ih = rectangle.Width / aspect;
-                var p = (int) Math.Ceiling((ih - rectangle.Height) * 0.5f);
-                return ExpandRectangle(rectangle, 0, p, width, height);
-            }
-        }
-
-        protected Rectangle ExpandRectangle(Rectangle rectangle, int paddingX, int paddingY, int width, int height)
-        {
-            if (paddingX == 0 && paddingY == 0) return rectangle;
-
-            var xn = Math.Max(0, rectangle.X - paddingX);
-            var xm = Math.Min(width, rectangle.Right + paddingX);
-
-            var yn = Math.Max(0, rectangle.Y - paddingY);
-            var ym = Math.Min(height, rectangle.Bottom + paddingY);
-
-            return new Rectangle(xn, yn, xm - xn, ym - yn);
         }
 
         protected bool DetermineEnabled(ImageState state)
