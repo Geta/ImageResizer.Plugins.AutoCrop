@@ -41,7 +41,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             if (rectangle.Height < 1)  return false;
             if (image.Equals(rectangle)) return false;
 
-            var t = 1.0 - threshold * 0.01;
+            var t = 1.0 - threshold * 0.001;
             var tw = image.Width * t;
             var th = image.Height * t;
 
