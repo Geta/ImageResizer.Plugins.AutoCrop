@@ -210,6 +210,9 @@ namespace ImageResizer.Plugins.AutoCrop
             if (width < 4 && height <= 4) return false;
             if (height < 4 && width <= 4) return false;
 
+            if (width < 3) return false;
+            if (height < 3) return false;
+
             return true;
         }
 
