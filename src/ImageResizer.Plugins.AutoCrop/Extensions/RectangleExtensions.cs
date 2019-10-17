@@ -12,6 +12,9 @@ namespace ImageResizer.Plugins.AutoCrop.Extensions
 
         public static Rectangle ConstrainAspect(this Rectangle rectangle, float aspect, int width, int height)
         {
+            if (rectangle.Equals(Rectangle.Empty)) return rectangle;
+            if (aspect == 0) return rectangle;
+
             var ta = rectangle.Width / (float)rectangle.Height;
 
             if (Math.Abs(aspect - ta) < 0.01f)
