@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.5]
+
+### Added
+- Additional error handling
+
 ## [1.1.4]
 
 ### Fixed

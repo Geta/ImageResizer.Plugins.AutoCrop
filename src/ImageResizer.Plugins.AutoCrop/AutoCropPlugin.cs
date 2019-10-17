@@ -40,11 +40,20 @@ namespace ImageResizer.Plugins.AutoCrop
         
         protected override RequestedAction LayoutImage(ImageState state)
         {
-            var enabled = DetermineEnabled(state);
-            if (!enabled) return RequestedAction.None;
+            if (state == null) return RequestedAction.None;
+            if (state.settings == null) return RequestedAction.None;
+            if (state.sourceBitmap == null) return RequestedAction.None;
 
-            var settings = GetSettings(state);
             var bitmap = state.sourceBitmap;
+            if (!IsRequiredSize(bitmap)) return RequestedAction.None;
+
+            var pixelFormat = bitmap.PixelFormat;
+            if (!IsCorrectFormat(pixelFormat)) return RequestedAction.None;
+
+            var setting = state.settings["autoCrop"];
+            if (setting == null) return RequestedAction.None;
+
+            var settings = ParseSettings(setting, state.settings["autoCropDebug"]);
 
             state.Data[SettingsKey] = settings;
 
@@ -90,7 +99,7 @@ namespace ImageResizer.Plugins.AutoCrop
 
         protected override RequestedAction PostLayoutImage(ImageState state)
         {
-            if (!state.Data.ContainsKey(DataKey) || state.Data.ContainsKey(DebugKey)) 
+            if (state == null || !state.Data.ContainsKey(DataKey) || state.Data.ContainsKey(DebugKey)) 
                 return RequestedAction.None;
 
             var box = (Rectangle)state.Data[DataKey];
@@ -103,7 +112,7 @@ namespace ImageResizer.Plugins.AutoCrop
 
         protected override RequestedAction PreRenderImage(ImageState state)
         {
-            if (!state.Data.ContainsKey(DataKey) || !state.Data.ContainsKey(DebugKey))
+            if (state == null || !state.Data.ContainsKey(DataKey) || !state.Data.ContainsKey(DebugKey))
                 return RequestedAction.None;
             
             try
@@ -139,20 +148,6 @@ namespace ImageResizer.Plugins.AutoCrop
             return (int) Math.Ceiling(dimension * percentage * 0.01f);
         }
 
-        protected bool DetermineEnabled(ImageState state)
-        {
-            if (state.settings == null) return false;
-
-            var pixelFormat = state.sourceBitmap.PixelFormat;
-
-            if (!IsCorrectFormat(pixelFormat)) return false;
-
-            var setting = state.settings["autoCrop"];
-            if (setting == null) return false;
-
-            return true;
-        }
-
         protected Size GetDestinationSize(ImageState state, Bitmap bitmap)
         {
             var originalSize = new Size(bitmap.Width, bitmap.Height);
@@ -166,40 +161,59 @@ namespace ImageResizer.Plugins.AutoCrop
             if (h == null || !int.TryParse(h, out var height))
                 return originalSize;
 
+            if (!IsRequiredSize(width, height))
+                return originalSize;
+
             return new Size(width, height);
         }
 
-        protected AutoCropSettings GetSettings(ImageState state)
+        protected AutoCropSettings ParseSettings(string settingsValue, string debugValue = null)
         {
             var result = new AutoCropSettings();
-            var raw = state.settings["autoCrop"];
-            if (raw == null) return result;
+            if (settingsValue == null) return result;
 
-            result.Debug = state.settings["autoCropDebug"] != null;
+            result.Debug = debugValue != null;
             
-            var data = raw.Split(',', ';', '|');
+            var data = settingsValue.Split(',', ';', '|');
 
             var parsed = int.TryParse(data[0], out var padX);
             if (!parsed) return result;
 
             result.Parsed = true;
-            result.PadX = padX;
+            result.PadX = Math.Max(padX, 0);
 
             if (data.Length > 2 && int.TryParse(data[2], out var threshold))
             {
-                result.Threshold = threshold;
+                result.Threshold = Math.Max(threshold, 0);
             }
 
             if (data.Length > 1 && int.TryParse(data[1], out var padY))
             {
-                result.PadY = padY;
+                result.PadY = Math.Max(padY, 0);
             }
             else
             {
-                result.PadY = padX;
+                result.PadY = Math.Max(padX, 0);
             }
             
             return result;
+        }
+
+        protected bool IsRequiredSize(Bitmap bitmap)
+        {
+            if (bitmap == null) return false;
+            return IsRequiredSize(bitmap.Width, bitmap.Height);
+        }
+
+        protected bool IsRequiredSize(int width, int height)
+        {
+            if (width < 4 && height <= 4) return false;
+            if (height < 4 && width <= 4) return false;
+
+            if (width < 3) return false;
+            if (height < 3) return false;
+
+            return true;
         }
 
         protected bool IsCorrectFormat(PixelFormat format)
