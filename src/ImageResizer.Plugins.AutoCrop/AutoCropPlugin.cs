@@ -30,6 +30,7 @@ namespace ImageResizer.Plugins.AutoCrop
             return new[]
             {
                 "autoCrop",
+                "autoCropMode",
                 "autoCropDebug"
             };
         }
@@ -53,7 +54,7 @@ namespace ImageResizer.Plugins.AutoCrop
             var setting = state.settings["autoCrop"];
             if (setting == null) return RequestedAction.None;
 
-            var settings = ParseSettings(setting, state.settings["autoCropDebug"]);
+            var settings = ParseSettings(setting, state.settings["autoCropMode"], state.settings["autoCropDebug"]);
 
             state.Data[SettingsKey] = settings;
 
@@ -84,6 +85,11 @@ namespace ImageResizer.Plugins.AutoCrop
                     else
                     {
                         state.originalSize = constrainedBox.Size;
+                        
+                        if (settings.SetMode)
+                        {
+                            state.settings.Mode = settings.Mode;
+                        }
                     }
 
                     state.Data[DataKey] = constrainedBox;
@@ -167,7 +173,7 @@ namespace ImageResizer.Plugins.AutoCrop
             return new Size(width, height);
         }
 
-        protected AutoCropSettings ParseSettings(string settingsValue, string debugValue = null)
+        protected AutoCropSettings ParseSettings(string settingsValue, string modeValue = null, string debugValue = null)
         {
             var result = new AutoCropSettings();
             if (settingsValue == null) return result;
@@ -194,6 +200,12 @@ namespace ImageResizer.Plugins.AutoCrop
             else
             {
                 result.PadY = Math.Max(padX, 0);
+            }
+
+            if (Enum.TryParse(modeValue, true, out FitMode fitMode))
+            {
+                result.SetMode = true;
+                result.Mode = fitMode;
             }
             
             return result;

@@ -7,5 +7,7 @@
         public int Threshold = 35;
         public bool Parsed;
         public bool Debug;
+        public bool SetMode;
+        public FitMode Mode;
     }
 }
