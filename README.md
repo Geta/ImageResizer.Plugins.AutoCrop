@@ -13,6 +13,7 @@ Preserves original aspect ratio or image.
 - Crops images with a flat background
 - Configurable x and y padding
 - Configurable color difference treshold
+- Can override FitMode of regular resizer
 
 ## How to get started?
 
@@ -42,6 +43,7 @@ Plugin unlocks the ability to use the following query parameters for images
 | _x-padding_ | the first provided parameter value | 10 |
 | _y-padding_ | the second provided parameter value | 10;_20_ |
 | _threshold_ | the third provided parameter value, background color deviation threshold | 10;20;_30_ |
+| autoCropMode | overrides the fit mode if the autoCrop is successfully completed | _?autoCropMode=pad_ |
 | autoCropDebug | displays a debug visualisation of how the plugin evaluated instead of cropping | _?autoCropDebug=1_ |
 
 ## Package maintainer
