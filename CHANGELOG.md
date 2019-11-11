@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0]
+
+### Added
+- Added automatic resolution of background color when no ?bgcolor parameter is specified.
+
+### Fixed
+- Fixed a problem with RGBA bounding box evaluation.
+
 ## [1.2.0]
 
 ### Added

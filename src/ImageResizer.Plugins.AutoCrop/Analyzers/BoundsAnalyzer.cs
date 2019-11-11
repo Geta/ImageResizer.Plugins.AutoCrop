@@ -7,27 +7,28 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
     public class BoundsAnalyzer
     {
         public readonly Rectangle BoundingBox;
+        public readonly BorderAnalyzer BorderAnalysis;
         public readonly bool FoundBoundingBox;
 
         public BoundsAnalyzer(BitmapData bitmap, int threshold)
         {
             var imageBox = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
-            var borderAnalyzer = new BorderAnalyzer(bitmap, threshold);
+            BorderAnalysis = new BorderAnalyzer(bitmap, threshold);
 
-            if (borderAnalyzer.BorderIsDirty)
+            if (BorderAnalysis.BorderIsDirty)
             {
                 BoundingBox = imageBox;
                 FoundBoundingBox = false;
             }
             else
             {
-                if (borderAnalyzer.BitsPerPixel == 3)
+                if (BorderAnalysis.BitsPerPixel == 3)
                 {
-                    BoundingBox = GetBoundingBoxForContentRgb(bitmap, borderAnalyzer.BackgroundColor, threshold);
+                    BoundingBox = GetBoundingBoxForContentRgb(bitmap, BorderAnalysis.BackgroundColor, threshold);
                 }
                 else
                 {
-                    BoundingBox = GetBoundingBoxForContentArgb(bitmap, borderAnalyzer.BackgroundColor, threshold);
+                    BoundingBox = GetBoundingBoxForContentArgb(bitmap, BorderAnalysis.BackgroundColor, threshold);
                 }
 
                 FoundBoundingBox = ValidateRectangle(BoundingBox, imageBox, threshold);
@@ -121,19 +122,21 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                         var b = row[p];
                         var g = row[p + 1];
                         var r = row[p + 2];
-                        var a = row[p + 3] * 0.003921568627451;
+                        var a = row[p + 3];
+                        var ac = a * 0.003921568627451;
 
-                        var bd = Math.Abs(b - backgroundColor.B) * a;
-                        var gd = Math.Abs(g - backgroundColor.G) * a;
-                        var rd = Math.Abs(r - backgroundColor.R) * a;
+                        var bd = Math.Abs(b - backgroundColor.B) * ac;
+                        var gd = Math.Abs(g - backgroundColor.G) * ac;
+                        var rd = Math.Abs(r - backgroundColor.R) * ac;
 
                         if (0.299 * rd + 0.587 * gd + 0.114 * bd <= threshold)
-                            continue;
-
-                        var ad = Math.Abs(row[p + 3] - backgroundColor.A);
-
-                        if (ad < threshold)
-                            continue;
+                        {
+                            var ad = Math.Abs(a - backgroundColor.A);
+                            if (ad < threshold)
+                            {
+                                continue;
+                            }
+                        }                        
 
                         if (x < xn) xn = x;
                         if (x > xm) xm = x;
