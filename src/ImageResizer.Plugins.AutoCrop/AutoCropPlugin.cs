@@ -67,32 +67,41 @@ namespace ImageResizer.Plugins.AutoCrop
 
                 if (analyzer.FoundBoundingBox)
                 {
-                    var aspectCorrectedBox = analyzer.BoundingBox.ConstrainAspect(bitmap.Width, bitmap.Height);
+                    Rectangle targetBox;
 
-                    var dimension = (int)((aspectCorrectedBox.Width + aspectCorrectedBox.Height) * 0.25f);
+                    var targetMode = settings.SetMode ? settings.Mode : state.settings.Mode;
+
+                    var bounds = analyzer.BoundingBox;
+                    var dimension = (int)((bounds.Width + bounds.Height) * 0.25f);
                     var paddingX = GetPadding(settings.PadX, dimension);
                     var paddingY = GetPadding(settings.PadY, dimension);
+                    var paddedBox = bounds.Expand(paddingX, paddingY, bitmap.Width, bitmap.Height);
 
-                    var paddedBox = analyzer.BoundingBox.Expand(paddingX, paddingY, bitmap.Width, bitmap.Height);
                     var destinationSize = GetDestinationSize(state, bitmap);
-                    var destinationAspect = destinationSize.Width / (float) destinationSize.Height;
-                    var constrainedBox = paddedBox.ConstrainAspect(destinationAspect, bitmap.Width, bitmap.Height);
+                    var destinationAspect = destinationSize.Width / (float)destinationSize.Height;
+
+                    targetBox = paddedBox.ConstrainAspect(destinationAspect, bitmap.Width, bitmap.Height);
 
                     if (settings.Debug)
                     {
-                        state.Data[DebugKey] = analyzer.BoundingBox;
+                        state.Data[DebugKey] = bounds;
                     }
                     else
                     {
-                        state.originalSize = constrainedBox.Size;
+                        state.originalSize = targetBox.Size;
                         
                         if (settings.SetMode)
                         {
                             state.settings.Mode = settings.Mode;
                         }
+
+                        if (state.settings.BackgroundColor.Equals(Color.Transparent))
+                        {
+                            state.settings.BackgroundColor = analyzer.BorderAnalysis.BackgroundColor;
+                        }
                     }
 
-                    state.Data[DataKey] = constrainedBox;
+                    state.Data[DataKey] = targetBox;
                 }
             }
             catch (Exception)
