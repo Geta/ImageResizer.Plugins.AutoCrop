@@ -122,15 +122,16 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                         var b = row[p];
                         var g = row[p + 1];
                         var r = row[p + 2];
-                        var a = row[p + 3] * 0.003921568627451;
+                        var a = row[p + 3];
+                        var ac = a * 0.003921568627451;
 
-                        var bd = Math.Abs(b - backgroundColor.B) * a;
-                        var gd = Math.Abs(g - backgroundColor.G) * a;
-                        var rd = Math.Abs(r - backgroundColor.R) * a;
+                        var bd = Math.Abs(b - backgroundColor.B) * ac;
+                        var gd = Math.Abs(g - backgroundColor.G) * ac;
+                        var rd = Math.Abs(r - backgroundColor.R) * ac;
 
                         if (0.299 * rd + 0.587 * gd + 0.114 * bd <= threshold)
                         {
-                            var ad = Math.Abs(row[p + 3] - backgroundColor.A);
+                            var ad = Math.Abs(a - backgroundColor.A);
                             if (ad < threshold)
                             {
                                 continue;
