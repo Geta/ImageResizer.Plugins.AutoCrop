@@ -2,13 +2,13 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 
-namespace ImageResizer.Plugins.AutoCrop.Analyzers
+namespace AutoCrop.Core.Analyzers
 {
     public class BoundsAnalyzer
     {
+        public readonly bool FoundBoundingBox;
         public readonly Rectangle BoundingBox;
         public readonly BorderAnalyzer BorderAnalysis;
-        public readonly bool FoundBoundingBox;
 
         public BoundsAnalyzer(BitmapData bitmap, int threshold)
         {

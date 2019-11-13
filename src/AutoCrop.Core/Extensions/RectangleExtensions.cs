@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Drawing;
 
-namespace ImageResizer.Plugins.AutoCrop.Extensions
+namespace AutoCrop.Core.Extensions
 {
     public static class RectangleExtensions
     {

@@ -1,15 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
-using ImageResizer.Plugins.AutoCrop.Models;
+using AutoCrop.Core.Models;
 
-namespace ImageResizer.Plugins.AutoCrop.Analyzers
+namespace AutoCrop.Core.Analyzers
 {
     public class BorderAnalyzer
     {
         public readonly bool BorderIsDirty;
         public readonly int BitsPerPixel;
         public readonly Color BackgroundColor;
+        public readonly float BucketRatio;
 
         public BorderAnalyzer(BitmapData bitmap, int threshold)
         {
@@ -26,6 +27,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
 
             BorderIsDirty = !result.Success;
             BackgroundColor = result.Background;
+            BucketRatio = result.BucketRatio;
         }
 
         private unsafe BorderAnalysisResult AnalyzeRgb(BitmapData bitmap, int threshold)
