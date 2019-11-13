@@ -28,13 +28,14 @@ namespace ImageResizer.Plugins.AutoPad
         {
             return new[]
             {
-                "autoPad"
+                "autoCropMode"
             };
         }
 
         public readonly string DataKey = "autopad";
-
-        protected override RequestedAction PostPrepareSourceBitmap(ImageState state)
+        public readonly string CropDataKey = "autocrop";
+        
+        protected override RequestedAction Layout(ImageState state)
         {
             if (state == null) return RequestedAction.None;
             if (state.settings == null) return RequestedAction.None;
@@ -46,19 +47,21 @@ namespace ImageResizer.Plugins.AutoPad
             var pixelFormat = bitmap.PixelFormat;
             if (!IsCorrectFormat(pixelFormat)) return RequestedAction.None;
 
-            var setting = state.settings["autoPad"];
+            if (state.Data.ContainsKey(CropDataKey)) return RequestedAction.None;
+            if (state.settings["autoCropMode"] != "pad") return RequestedAction.None;
+            
+            var setting = state.settings["autoCrop"];
             if (setting == null) return RequestedAction.None;
 
             var settings = ParseSettings(setting);
 
             try
             {
-                var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, bitmap.PixelFormat);                
-                var cropAnalyzer = new BorderAnalyzer(data, 35);
+                var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, bitmap.PixelFormat);
                 var analyzer = new BorderAnalyzer(data, settings.Threshold);
                 bitmap.UnlockBits(data);
 
-                if (cropAnalyzer.BorderIsDirty && !analyzer.BorderIsDirty && analyzer.BucketRatio > 0.9)
+                if (!analyzer.BorderIsDirty && analyzer.BucketRatio > 0.9)
                 {
                     var dimension = (int)((bitmap.Width + bitmap.Height) * 0.25f);
                     var paddingX = GetPadding(settings.PadX, dimension);
@@ -68,6 +71,9 @@ namespace ImageResizer.Plugins.AutoPad
                     var result = new AutoPadState(boxPadding, analyzer.BackgroundColor);
 
                     state.Data[DataKey] = result;
+
+                    state.settings.Mode = FitMode.Pad;
+                    state.settings.BackgroundColor = result.BackgroundColor;
                 }
             }
             catch (Exception)
@@ -100,7 +106,7 @@ namespace ImageResizer.Plugins.AutoPad
 
                 using (var graphics = Graphics.FromImage(state.preRenderBitmap))
                 {
-                    using (var brush = new SolidBrush(data.BackgroundColor))
+                    using (var brush = new SolidBrush(state.settings.BackgroundColor))
                     {
                         graphics.FillRectangle(brush, new Rectangle(0, 0, width, height));
                     }
