@@ -164,11 +164,15 @@ namespace ImageResizer.Plugins.AutoCrop
                 var h = (int)Math.Ceiling(targetDimensions.Height * scale);
 
                 if (state.preRenderBitmap == null)
-                    state.preRenderBitmap = new Bitmap(w, h);
+                    state.preRenderBitmap = new Bitmap(w, h, state.sourceBitmap.PixelFormat);
 
                 using (var graphics = Graphics.FromImage(state.preRenderBitmap))
                 {
-                    graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
+                    graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    graphics.SmoothingMode = SmoothingMode.HighQuality;
+                    graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                    graphics.CompositingQuality = CompositingQuality.HighQuality;
+                    graphics.CompositingMode = CompositingMode.SourceOver;
 
                     using (var brush = new SolidBrush(state.settings.BackgroundColor))
                     {
@@ -182,7 +186,6 @@ namespace ImageResizer.Plugins.AutoCrop
                     var dh = (int)Math.Ceiling(source.Height * scale);
 
                     var destination = new Rectangle(x, y, dw, dh);
-
                     graphics.DrawImage(state.sourceBitmap, destination, source, GraphicsUnit.Pixel);
                     source = destination;
                 }
