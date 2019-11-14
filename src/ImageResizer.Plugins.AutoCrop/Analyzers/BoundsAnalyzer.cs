@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 
-namespace AutoCrop.Core.Analyzers
+namespace ImageResizer.Plugins.AutoCrop.Analyzers
 {
     public class BoundsAnalyzer
     {
@@ -10,10 +10,10 @@ namespace AutoCrop.Core.Analyzers
         public readonly Rectangle BoundingBox;
         public readonly BorderAnalyzer BorderAnalysis;
 
-        public BoundsAnalyzer(BitmapData bitmap, int threshold)
+        public BoundsAnalyzer(BitmapData bitmap, int colorThreshold, float bucketTreshold)
         {
             var imageBox = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
-            BorderAnalysis = new BorderAnalyzer(bitmap, threshold);
+            BorderAnalysis = new BorderAnalyzer(bitmap, colorThreshold, bucketTreshold);
 
             if (BorderAnalysis.BorderIsDirty)
             {
@@ -24,14 +24,14 @@ namespace AutoCrop.Core.Analyzers
             {
                 if (BorderAnalysis.BitsPerPixel == 3)
                 {
-                    BoundingBox = GetBoundingBoxForContentRgb(bitmap, BorderAnalysis.BackgroundColor, threshold);
+                    BoundingBox = GetBoundingBoxForContentRgb(bitmap, BorderAnalysis.BackgroundColor, colorThreshold);
                 }
                 else
                 {
-                    BoundingBox = GetBoundingBoxForContentArgb(bitmap, BorderAnalysis.BackgroundColor, threshold);
+                    BoundingBox = GetBoundingBoxForContentArgb(bitmap, BorderAnalysis.BackgroundColor, colorThreshold);
                 }
 
-                FoundBoundingBox = ValidateRectangle(BoundingBox, imageBox, threshold);
+                FoundBoundingBox = ValidateRectangle(BoundingBox, imageBox, colorThreshold);
             }
         }
 

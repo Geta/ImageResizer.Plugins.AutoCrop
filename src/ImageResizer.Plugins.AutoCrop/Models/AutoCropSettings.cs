@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-
-namespace ImageResizer.Plugins.AutoCrop.Models
+﻿namespace ImageResizer.Plugins.AutoCrop.Models
 {
     public class AutoCropSettings
     {

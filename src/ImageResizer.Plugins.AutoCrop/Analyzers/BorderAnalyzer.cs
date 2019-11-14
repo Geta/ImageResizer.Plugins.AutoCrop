@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using ImageResizer.Plugins.AutoCrop.Extensions;
+using ImageResizer.Plugins.AutoCrop.Models;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
-using AutoCrop.Core.Models;
 
-namespace AutoCrop.Core.Analyzers
+namespace ImageResizer.Plugins.AutoCrop.Analyzers
 {
     public class BorderAnalyzer
     {
@@ -12,7 +13,7 @@ namespace AutoCrop.Core.Analyzers
         public readonly Color BackgroundColor;
         public readonly float BucketRatio;
 
-        public BorderAnalyzer(BitmapData bitmap, int threshold)
+        public BorderAnalyzer(BitmapData bitmap, int colorThreshold, float bucketThreshold)
         {
             BitsPerPixel = Image.GetPixelFormatSize(bitmap.PixelFormat) / 8;
 
@@ -20,8 +21,8 @@ namespace AutoCrop.Core.Analyzers
 
             switch (BitsPerPixel)
             {
-                case 4: result = AnalyzeArgb(bitmap, threshold); break;
-                case 3: result = AnalyzeRgb(bitmap, threshold); break;
+                case 4: result = AnalyzeArgb(bitmap, colorThreshold, bucketThreshold); break;
+                case 3: result = AnalyzeRgb(bitmap, colorThreshold, bucketThreshold); break;
                 default: result = new BorderAnalysisResult(); break;
             }
 
@@ -30,14 +31,15 @@ namespace AutoCrop.Core.Analyzers
             BucketRatio = result.BucketRatio;
         }
 
-        private unsafe BorderAnalysisResult AnalyzeRgb(BitmapData bitmap, int threshold)
+        private unsafe BorderAnalysisResult AnalyzeRgb(BitmapData bitmap, int colorThreshold, float bucketThreshold)
         {
             var h = bitmap.Height;
             var w = bitmap.Width;
             var s = bitmap.Stride;
             var s0 = (byte*)bitmap.Scan0;
 
-            var colors = new Dictionary<Color, int>(threshold);
+            var colors = new Dictionary<Color, int>(colorThreshold);
+            var buckets = new Dictionary<int, int>(ColorExtensions.GetMaxColorBuckets());
 
             unchecked
             {
@@ -51,18 +53,25 @@ namespace AutoCrop.Core.Analyzers
                     var r = row[p + 2];
 
                     var c = Color.FromArgb(r, g, b);
+                    var cb = c.ToColorBucket();
+
+                    if (buckets.ContainsKey(cb))
+                    {
+                        buckets[cb]++;
+                    }
+                    else
+                    {
+                        buckets.Add(cb, 1);
+                    }
 
                     if (colors.ContainsKey(c))
                     {
                         colors[c]++;
                     }
-                    else
+                    else if (colors.Count < colorThreshold)
                     {
                         colors.Add(c, 1);
                     }
-
-                    if (colors.Count >= threshold)
-                        return new BorderAnalysisResult(colors, threshold);
                 }
 
                 for (var y = 0; y < h; y++)
@@ -75,18 +84,25 @@ namespace AutoCrop.Core.Analyzers
                     var r = row[p + 2];
 
                     var c = Color.FromArgb(r, g, b);
+                    var cb = c.ToColorBucket();
+
+                    if (buckets.ContainsKey(cb))
+                    {
+                        buckets[cb]++;
+                    }
+                    else
+                    {
+                        buckets.Add(cb, 1);
+                    }
 
                     if (colors.ContainsKey(c))
                     {
                         colors[c]++;
                     }
-                    else
+                    else if (colors.Count < colorThreshold)
                     {
                         colors.Add(c, 1);
                     }
-
-                    if (colors.Count >= threshold)
-                        return new BorderAnalysisResult(colors, threshold);
                 }
 
                 for (var x = 0; x < w; x++)
@@ -99,18 +115,25 @@ namespace AutoCrop.Core.Analyzers
                     var r = row[p + 2];
 
                     var c = Color.FromArgb(r, g, b);
+                    var cb = c.ToColorBucket();
+
+                    if (buckets.ContainsKey(cb))
+                    {
+                        buckets[cb]++;
+                    }
+                    else
+                    {
+                        buckets.Add(cb, 1);
+                    }
 
                     if (colors.ContainsKey(c))
                     {
                         colors[c]++;
                     }
-                    else
+                    else if (colors.Count < colorThreshold)
                     {
                         colors.Add(c, 1);
                     }
-
-                    if (colors.Count >= threshold)
-                        return new BorderAnalysisResult(colors, threshold);
                 }
 
                 for (var x = 0; x < w; x++)
@@ -123,32 +146,40 @@ namespace AutoCrop.Core.Analyzers
                     var r = row[p + 2];
 
                     var c = Color.FromArgb(r, g, b);
+                    var cb = c.ToColorBucket();
+
+                    if (buckets.ContainsKey(cb))
+                    {
+                        buckets[cb]++;
+                    }
+                    else
+                    {
+                        buckets.Add(cb, 1);
+                    }
 
                     if (colors.ContainsKey(c))
                     {
                         colors[c]++;
                     }
-                    else
+                    else if (colors.Count < colorThreshold)
                     {
                         colors.Add(c, 1);
                     }
-
-                    if (colors.Count >= threshold)
-                        return new BorderAnalysisResult(colors, threshold);
                 }
             }
             
-            return new BorderAnalysisResult(colors, threshold);
+            return new BorderAnalysisResult(colors, buckets, colorThreshold, bucketThreshold);
         }
 
-        private unsafe BorderAnalysisResult AnalyzeArgb(BitmapData bitmap, int threshold)
+        private unsafe BorderAnalysisResult AnalyzeArgb(BitmapData bitmap, int colorThreshold, float bucketThreshold)
         {
             var h = bitmap.Height;
             var w = bitmap.Width;
             var s = bitmap.Stride;
             var s0 = (byte*)bitmap.Scan0;
 
-            var colors = new Dictionary<Color, int>(threshold);
+            var colors = new Dictionary<Color, int>(colorThreshold);
+            var buckets = new Dictionary<int, int>(ColorExtensions.GetMaxColorBuckets());
 
             unchecked
             {
@@ -163,18 +194,25 @@ namespace AutoCrop.Core.Analyzers
                     var a = row[p + 3];
                     
                     var c = a == 0 ? Color.Transparent : Color.FromArgb(a, r, g, b);
-                    
+                    var cb = c.ToColorBucket();
+
+                    if (buckets.ContainsKey(cb))
+                    {
+                        buckets[cb]++;
+                    }
+                    else
+                    {
+                        buckets.Add(cb, 1);
+                    }
+
                     if (colors.ContainsKey(c))
                     {
                         colors[c]++;
                     }
-                    else
+                    else if (colors.Count < colorThreshold)
                     {
                         colors.Add(c, 1);
                     }
-
-                    if (colors.Count >= threshold)
-                        return new BorderAnalysisResult(colors, threshold);
                 }
 
                 for (var y = 0; y < h; y++)
@@ -187,19 +225,26 @@ namespace AutoCrop.Core.Analyzers
                     var r = row[p + 2];
                     var a = row[p + 3];
 
-                    var c = Color.FromArgb(a, r, g, b);
+                    var c = a == 0 ? Color.Transparent : Color.FromArgb(a, r, g, b);
+                    var cb = c.ToColorBucket();
+
+                    if (buckets.ContainsKey(cb))
+                    {
+                        buckets[cb]++;
+                    }
+                    else
+                    {
+                        buckets.Add(cb, 1);
+                    }
 
                     if (colors.ContainsKey(c))
                     {
                         colors[c]++;
                     }
-                    else
+                    else if (colors.Count < colorThreshold)
                     {
                         colors.Add(c, 1);
                     }
-
-                    if (colors.Count >= threshold)
-                        return new BorderAnalysisResult(colors, threshold);
                 }
 
                 for (var x = 0; x < w; x++)
@@ -212,19 +257,26 @@ namespace AutoCrop.Core.Analyzers
                     var r = row[p + 2];
                     var a = row[p + 3];
 
-                    var c = Color.FromArgb(a, r, g, b);
+                    var c = a == 0 ? Color.Transparent : Color.FromArgb(a, r, g, b);
+                    var cb = c.ToColorBucket();
+
+                    if (buckets.ContainsKey(cb))
+                    {
+                        buckets[cb]++;
+                    }
+                    else
+                    {
+                        buckets.Add(cb, 1);
+                    }
 
                     if (colors.ContainsKey(c))
                     {
                         colors[c]++;
                     }
-                    else
+                    else if (colors.Count < colorThreshold)
                     {
                         colors.Add(c, 1);
                     }
-
-                    if (colors.Count >= threshold)
-                        return new BorderAnalysisResult(colors, threshold);
                 }
 
                 for (var x = 0; x < w; x++)
@@ -237,23 +289,30 @@ namespace AutoCrop.Core.Analyzers
                     var r = row[p + 2];
                     var a = row[p + 3];
 
-                    var c = Color.FromArgb(a, r, g, b);
+                    var c = a == 0 ? Color.Transparent : Color.FromArgb(a, r, g, b);
+                    var cb = c.ToColorBucket();
+
+                    if (buckets.ContainsKey(cb))
+                    {
+                        buckets[cb]++;
+                    }
+                    else
+                    {
+                        buckets.Add(cb, 1);
+                    }
 
                     if (colors.ContainsKey(c))
                     {
                         colors[c]++;
                     }
-                    else
+                    else if (colors.Count < colorThreshold)
                     {
                         colors.Add(c, 1);
                     }
-
-                    if (colors.Count >= threshold)
-                        return new BorderAnalysisResult(colors, threshold);
                 }
             }
-            
-            return new BorderAnalysisResult(colors, threshold);
+
+            return new BorderAnalysisResult(colors, buckets, colorThreshold, bucketThreshold);
         }
     }
 }

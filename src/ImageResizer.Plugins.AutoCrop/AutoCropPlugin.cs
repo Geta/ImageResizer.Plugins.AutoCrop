@@ -6,9 +6,8 @@ using System.Collections.Generic;
 using ImageResizer.Configuration;
 using ImageResizer.Plugins.AutoCrop.Models;
 using ImageResizer.Resizing;
-using AutoCrop.Core.Analyzers;
-using AutoCrop.Core.Extensions;
-using AutoCrop.Core.Models;
+using ImageResizer.Plugins.AutoCrop.Analyzers;
+using ImageResizer.Plugins.AutoCrop.Extensions;
 
 namespace ImageResizer.Plugins.AutoCrop
 {
@@ -62,12 +61,13 @@ namespace ImageResizer.Plugins.AutoCrop
             try
             {
                 var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, bitmap.PixelFormat);
-                var analyzer = new BoundsAnalyzer(data, settings.Threshold);
+                var analyzer = new BoundsAnalyzer(data, settings.Threshold, 0.90f);
+
                 bitmap.UnlockBits(data);
 
                 if (analyzer.FoundBoundingBox)
                 {
-                    state.Data[DataKey] = new BoundsAnalysisResult(analyzer);
+                    state.Data[DataKey] = new AutoCropState(analyzer, bitmap);
                 }
             }
             catch (Exception)
@@ -87,7 +87,7 @@ namespace ImageResizer.Plugins.AutoCrop
             {
                 var bitmap = state.sourceBitmap;
                 var settings = (AutoCropSettings)state.Data[SettingsKey];
-                var data = (BoundsAnalysisResult)state.Data[DataKey];
+                var data = (AutoCropState)state.Data[DataKey];
                 
                 var bounds = data.Bounds;
                 var targetMode = settings.SetMode ? settings.Mode : state.settings.Mode;
@@ -95,12 +95,16 @@ namespace ImageResizer.Plugins.AutoCrop
                 var dimension = (int)((bounds.Width + bounds.Height) * 0.25f);
                 var paddingX = GetPadding(settings.PadX, dimension);
                 var paddingY = GetPadding(settings.PadY, dimension);
-                var paddedBox = bounds.Expand(paddingX, paddingY, bitmap.Width, bitmap.Height);
+                var paddedBox = bounds.Expand(paddingX, paddingY);
+
+                data.Padding = new Size(paddingX, paddingY);
 
                 var destinationSize = GetDestinationSize(state, bitmap);
                 var destinationAspect = destinationSize.Width / (float)destinationSize.Height;
 
-                var targetBox = paddedBox.ConstrainAspect(destinationAspect, bitmap.Width, bitmap.Height);
+                var targetBox = data.TargetDimensions = paddedBox.Aspect(destinationAspect);
+
+                data.Scale = destinationSize.Width / (float)targetBox.Width;
 
                 if (settings.Debug)
                 {
@@ -108,20 +112,25 @@ namespace ImageResizer.Plugins.AutoCrop
                 }
                 else
                 {
-                    state.originalSize = targetBox.Size;
-
-                    if (settings.SetMode)
+                    if (data.OriginalDimensions.Contains(targetBox))
                     {
-                        state.settings.Mode = settings.Mode;
-                    }
+                        state.originalSize = targetBox.Size;
 
+                        if (settings.SetMode)
+                        {
+                            state.settings.Mode = settings.Mode;
+                        }
+                    }
+                    else
+                    {
+                        state.settings.Mode = FitMode.Crop;
+                    }
+                    
                     if (state.settings.BackgroundColor.Equals(Color.Transparent))
                     {
                         state.settings.BackgroundColor = data.BorderColor;
                     }
                 }
-
-                state.Data[DataKey] = targetBox;
             }
             catch (Exception)
             {
@@ -131,24 +140,60 @@ namespace ImageResizer.Plugins.AutoCrop
             return RequestedAction.None;
         }
 
-        protected override RequestedAction PostLayoutImage(ImageState state)
-        {
-            if (state == null || !state.Data.ContainsKey(DataKey) || state.Data.ContainsKey(DebugKey)) 
-                return RequestedAction.None;
-
-            var box = (Rectangle)state.Data[DataKey];
-            var copyRect = new RectangleF(state.copyRect.X + box.X, state.copyRect.Y + box.Y, state.copyRect.Width, state.copyRect.Height);
-
-            state.copyRect = copyRect;
-
-            return RequestedAction.None;
-        }
-
         protected override RequestedAction PreRenderImage(ImageState state)
         {
-            if (state == null || !state.Data.ContainsKey(DataKey) || !state.Data.ContainsKey(DebugKey))
+            if (state == null || !state.Data.ContainsKey(DataKey))
                 return RequestedAction.None;
             
+            var data = (AutoCropState)state.Data[DataKey];
+            var originalDimensions = data.OriginalDimensions;
+            var targetDimensions = data.TargetDimensions;
+
+            var source = data.Bounds;
+            var padding = data.Padding;
+            var scale = data.Scale;
+
+            if (originalDimensions.Contains(targetDimensions))
+            {
+                var copyRect = new RectangleF(state.copyRect.X + targetDimensions.X, state.copyRect.Y + targetDimensions.Y, state.copyRect.Width, state.copyRect.Height);
+                state.copyRect = copyRect;
+            }
+            else
+            {
+                var w = (int)Math.Ceiling(targetDimensions.Width * scale);
+                var h = (int)Math.Ceiling(targetDimensions.Height * scale);
+
+                if (state.preRenderBitmap == null)
+                    state.preRenderBitmap = new Bitmap(w, h);
+
+                using (var graphics = Graphics.FromImage(state.preRenderBitmap))
+                {
+                    graphics.SmoothingMode = SmoothingMode.HighQuality;
+
+                    using (var brush = new SolidBrush(state.settings.BackgroundColor))
+                    {
+                        graphics.FillRectangle(brush, new Rectangle(0, 0, w, h));
+                    }
+
+                    var x = (int)Math.Ceiling((targetDimensions.Width - source.Width) * 0.5f * scale);
+                    var y = (int)Math.Ceiling((targetDimensions.Height - source.Height) * 0.5f * scale);
+
+                    var dw = (int)Math.Ceiling(source.Width * scale);
+                    var dh = (int)Math.Ceiling(source.Height * scale);
+
+                    var destination = new Rectangle(x, y, dw, dh);
+
+                    graphics.DrawImage(state.sourceBitmap, destination, source, GraphicsUnit.Pixel);
+                    source = destination;
+                }
+
+                state.originalSize = new Size(w, h);
+                state.copyRect = new RectangleF(0, 0, w, h);
+            }
+
+            if (state == null || !state.Data.ContainsKey(DebugKey))
+                return RequestedAction.None;
+
             try
             {
                 if (state.preRenderBitmap == null)
@@ -160,12 +205,12 @@ namespace ImageResizer.Plugins.AutoCrop
 
                     using (var pen = new Pen(Color.CornflowerBlue, 2))
                     {
-                        graphics.DrawRectangle(pen, (Rectangle)state.Data[DataKey]);
+                        graphics.DrawRectangle(pen, source);
                     }
 
                     using (var pen = new Pen(Color.Red, 2))
                     {
-                        graphics.DrawRectangle(pen, (Rectangle)state.Data[DebugKey]);
+                        graphics.DrawRectangle(pen, source.Expand(padding.Width, padding.Height));
                     }
                 }
             }
