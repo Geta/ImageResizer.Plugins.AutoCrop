@@ -31,22 +31,15 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     BoundingBox = GetBoundingBoxForContentArgb(bitmap, BorderAnalysis.BackgroundColor, colorThreshold);
                 }
 
-                FoundBoundingBox = ValidateRectangle(BoundingBox, imageBox, colorThreshold);
+                FoundBoundingBox = ValidateRectangle(BoundingBox);
             }
         }
 
-        private bool ValidateRectangle(Rectangle rectangle, Rectangle image, int threshold)
+        private bool ValidateRectangle(Rectangle rectangle)
         {
             if (rectangle == null) return false;
-            if (rectangle.Width < 1) return false;
-            if (rectangle.Height < 1)  return false;
-            if (image.Equals(rectangle)) return false;
-
-            var t = 1.0 - threshold * 0.001;
-            var tw = image.Width * t;
-            var th = image.Height * t;
-
-            if (rectangle.Width > tw && rectangle.Height > th) return false;
+            if (rectangle.Width < 3) return false;
+            if (rectangle.Height < 3)  return false;
 
             return true;
         }

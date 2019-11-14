@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.1]
+
+### Fixed
+- Problem with rectangle validation on near-edge bounding boxes.
+
 ## [1.4.0]
 
 ### Added
