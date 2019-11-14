@@ -151,7 +151,7 @@ namespace ImageResizer.Plugins.AutoCrop
 
             var source = data.Bounds;
             var padding = data.Padding;
-            var scale = data.Scale;
+            var scale = Math.Min(data.Scale * 1.25, 1);
 
             if (originalDimensions.Contains(targetDimensions))
             {
@@ -168,7 +168,7 @@ namespace ImageResizer.Plugins.AutoCrop
 
                 using (var graphics = Graphics.FromImage(state.preRenderBitmap))
                 {
-                    graphics.SmoothingMode = SmoothingMode.HighQuality;
+                    graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
 
                     using (var brush = new SolidBrush(state.settings.BackgroundColor))
                     {

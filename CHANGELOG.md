@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.2]
+
+### Fixed
+- Image sharpness on small expanded images.
+
 ## [1.4.1]
 
 ### Fixed
