@@ -6,14 +6,14 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
 {
     public class BoundsAnalyzer
     {
+        public readonly bool FoundBoundingBox;
         public readonly Rectangle BoundingBox;
         public readonly BorderAnalyzer BorderAnalysis;
-        public readonly bool FoundBoundingBox;
 
-        public BoundsAnalyzer(BitmapData bitmap, int threshold)
+        public BoundsAnalyzer(BitmapData bitmap, int colorThreshold, float bucketTreshold)
         {
             var imageBox = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
-            BorderAnalysis = new BorderAnalyzer(bitmap, threshold);
+            BorderAnalysis = new BorderAnalyzer(bitmap, colorThreshold, bucketTreshold);
 
             if (BorderAnalysis.BorderIsDirty)
             {
@@ -24,29 +24,22 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             {
                 if (BorderAnalysis.BitsPerPixel == 3)
                 {
-                    BoundingBox = GetBoundingBoxForContentRgb(bitmap, BorderAnalysis.BackgroundColor, threshold);
+                    BoundingBox = GetBoundingBoxForContentRgb(bitmap, BorderAnalysis.BackgroundColor, colorThreshold);
                 }
                 else
                 {
-                    BoundingBox = GetBoundingBoxForContentArgb(bitmap, BorderAnalysis.BackgroundColor, threshold);
+                    BoundingBox = GetBoundingBoxForContentArgb(bitmap, BorderAnalysis.BackgroundColor, colorThreshold);
                 }
 
-                FoundBoundingBox = ValidateRectangle(BoundingBox, imageBox, threshold);
+                FoundBoundingBox = ValidateRectangle(BoundingBox);
             }
         }
 
-        private bool ValidateRectangle(Rectangle rectangle, Rectangle image, int threshold)
+        private bool ValidateRectangle(Rectangle rectangle)
         {
             if (rectangle == null) return false;
-            if (rectangle.Width < 1) return false;
-            if (rectangle.Height < 1)  return false;
-            if (image.Equals(rectangle)) return false;
-
-            var t = 1.0 - threshold * 0.001;
-            var tw = image.Width * t;
-            var th = image.Height * t;
-
-            if (rectangle.Width > tw && rectangle.Height > th) return false;
+            if (rectangle.Width < 3) return false;
+            if (rectangle.Height < 3)  return false;
 
             return true;
         }

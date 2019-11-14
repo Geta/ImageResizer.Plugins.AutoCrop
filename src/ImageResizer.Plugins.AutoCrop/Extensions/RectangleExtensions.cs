@@ -5,12 +5,12 @@ namespace ImageResizer.Plugins.AutoCrop.Extensions
 {
     public static class RectangleExtensions
     {
-        public static Rectangle ConstrainAspect(this Rectangle rectangle, int width, int height)
+        public static Rectangle Aspect(this Rectangle rectangle, int width, int height)
         {
-            return ConstrainAspect(rectangle, width / (float)height, width, height);
+            return Aspect(rectangle, width / (float)height, width, height);
         }
 
-        public static Rectangle ConstrainAspect(this Rectangle rectangle, float aspect, int width, int height)
+        public static Rectangle Aspect(this Rectangle rectangle, float aspect, int width, int height)
         {
             if (rectangle.Equals(Rectangle.Empty)) return rectangle;
             if (aspect == 0) return rectangle;
@@ -22,19 +22,53 @@ namespace ImageResizer.Plugins.AutoCrop.Extensions
 
             if (aspect > ta)
             {
-                var iw = rectangle.Height * aspect;
+                var iw = (int)Math.Ceiling(rectangle.Height * aspect);
                 var p = (int)Math.Ceiling((iw - rectangle.Width) * 0.5f);
                 return Expand(rectangle, p, 0, width, height);
             }
             else
             {
-                var ih = rectangle.Width / aspect;
+                var ih = (int)Math.Ceiling(rectangle.Width / aspect);
                 var p = (int)Math.Ceiling((ih - rectangle.Height) * 0.5f);
                 return Expand(rectangle, 0, p, width, height);
             }
         }
 
-        public static Rectangle Expand(this Rectangle rectangle, int paddingX, int paddingY, int width, int height)
+        public static Rectangle Aspect(this Rectangle rectangle, float aspect)
+        {
+            if (rectangle.Equals(Rectangle.Empty)) return rectangle;
+            if (aspect == 0) return rectangle;
+
+            var ta = rectangle.Width / (float)rectangle.Height;
+
+            if (Math.Abs(aspect - ta) < 0.01f)
+                return rectangle;
+
+            if (aspect > ta)
+            {
+                var iw = (int)Math.Ceiling(rectangle.Height * aspect);
+                var p = (int)Math.Ceiling((iw - rectangle.Width) * 0.5f);
+                return Expand(rectangle, p, 0);
+            }
+            else
+            {
+                var ih = (int)Math.Ceiling(rectangle.Width / aspect);
+                var p = (int)Math.Ceiling((ih - rectangle.Height) * 0.5f);
+                return Expand(rectangle, 0, p);
+            }
+        }
+
+        public static Rectangle Expand(this Rectangle rectangle, int paddingX, int paddingY)
+        {
+            if (paddingX == 0 && paddingY == 0) return rectangle;
+
+            return new Rectangle(rectangle.X - paddingX, 
+                                 rectangle.Y - paddingY, 
+                                 rectangle.Width + paddingX * 2, 
+                                 rectangle.Height + paddingY * 2);
+        }
+
+        public static Rectangle Expand(this Rectangle rectangle, int paddingX, int paddingY, int maxWidth, int maxHeight)
         {
             if (paddingX == 0 && paddingY == 0)
                 return rectangle;
@@ -48,9 +82,9 @@ namespace ImageResizer.Plugins.AutoCrop.Extensions
 
             var xmc = 0;
             var xm = rectangle.Right + paddingX;
-            if (xm > width)
+            if (xm > maxWidth)
             {
-                xmc = xm - width;
+                xmc = xm - maxWidth;
             }
 
             var c = Math.Max(xnc, xmc);
@@ -67,9 +101,9 @@ namespace ImageResizer.Plugins.AutoCrop.Extensions
 
             var ymc = 0;
             var ym = rectangle.Bottom + paddingY;
-            if (ym > height)
+            if (ym > maxHeight)
             {
-                ymc = ym - height;
+                ymc = ym - maxHeight;
             }
 
             c = Math.Max(ync, ymc);

@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.2]
+
+### Fixed
+- Image sharpness on small expanded images.
+
+## [1.4.1]
+
+### Fixed
+- Problem with rectangle validation on near-edge bounding boxes.
+
+## [1.4.0]
+
+### Added
+- Improved image analysis (combined bucket analysis and color thresholding)
+- Improved layout capabilities, will now add padding to images that don't have enough whitespace.
+
 ## [1.3.0]
 
 ### Added

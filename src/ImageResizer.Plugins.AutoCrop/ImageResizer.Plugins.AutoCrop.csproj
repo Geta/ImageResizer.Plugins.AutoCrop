@@ -43,6 +43,7 @@
   <ItemGroup>
     <Reference Include="ImageResizer, Version=4.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\ImageResizer.4.0.5\lib\net45\ImageResizer.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
@@ -51,9 +52,11 @@
     <Compile Include="Analyzers\BorderAnalyzer.cs" />
     <Compile Include="Analyzers\BoundsAnalyzer.cs" />
     <Compile Include="AutoCropPlugin.cs" />
+    <Compile Include="Extensions\ColorExtensions.cs" />
     <Compile Include="Extensions\RectangleExtensions.cs" />
     <Compile Include="Models\AutoCropSettings.cs" />
     <Compile Include="Models\BorderAnalysisResult.cs" />
+    <Compile Include="Models\AutoCropState.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
