@@ -2,15 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.4]
+
+### Fixed
+- Issue with image scaling.
+- Image quality improvements.
+
 ## [1.4.3]
 
 ### Fixed
-- Image quality improvements.
+- Image quality improvements (delisted).
 
 ## [1.4.2]
 
 ### Fixed
-- Image quality improvements.
+- Image quality improvements (delisted).
 
 ## [1.4.1]
 
