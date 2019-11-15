@@ -10,7 +10,9 @@ namespace ImageResizer.Plugins.AutoCrop.Models
         public readonly Rectangle OriginalDimensions;
         public Rectangle TargetDimensions;
         public Size Padding;
-        public float Scale;
+
+        public bool ShouldPreRender;
+        public RenderInstructions PreRenderInstructions;        
 
         public AutoCropState(BoundsAnalyzer analyzer, Bitmap bitmap)
         {

@@ -57,6 +57,7 @@
     <Compile Include="Models\AutoCropSettings.cs" />
     <Compile Include="Models\BorderAnalysisResult.cs" />
     <Compile Include="Models\AutoCropState.cs" />
+    <Compile Include="Models\RenderInstructions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
