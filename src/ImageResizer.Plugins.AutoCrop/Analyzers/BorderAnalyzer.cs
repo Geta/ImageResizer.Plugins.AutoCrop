@@ -78,7 +78,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                 {
                     var row = s0 + y * s;
                     
-                    var p = w * BitsPerPixel;
+                    var p = (w - 1) * BitsPerPixel;
                     var b = row[p];
                     var g = row[p + 1];
                     var r = row[p + 2];
@@ -219,7 +219,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                 {
                     var row = s0 + y * s;
                     
-                    var p = w * BitsPerPixel;
+                    var p = (w - 1) * BitsPerPixel;
                     var b = row[p];
                     var g = row[p + 1];
                     var r = row[p + 2];
