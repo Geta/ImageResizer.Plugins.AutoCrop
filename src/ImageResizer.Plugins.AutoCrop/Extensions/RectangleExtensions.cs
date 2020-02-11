@@ -68,6 +68,34 @@ namespace ImageResizer.Plugins.AutoCrop.Extensions
                                  rectangle.Height + paddingY * 2);
         }
 
+        public static Rectangle Contract(this Rectangle rectangle, double percent)
+        {
+            return Contract(rectangle, percent, percent);
+        }
+
+        public static Rectangle Contract(this Rectangle rectangle, double percentX, double percentY)
+        {
+            if (percentX == 0 && percentY == 0)
+                return rectangle;
+
+            if (percentX > 100) 
+                percentX = 100;
+
+            if (percentY > 100)
+                percentY = 100;
+            
+            var rx = percentX * 0.01 * 0.5;
+            var ry = percentY * 0.01 * 0.5;
+
+            var xn = rectangle.Left + (int)(rectangle.Width * rx);
+            var xm = rectangle.Right - (int)(rectangle.Width * rx);
+            
+            var yn = rectangle.Top + (int)(rectangle.Height * ry);
+            var ym = rectangle.Bottom - (int)(rectangle.Height * ry);
+
+            return new Rectangle(xn, yn, xm - xn, ym - yn);
+        }
+
         public static Rectangle Expand(this Rectangle rectangle, int paddingX, int paddingY, int maxWidth, int maxHeight)
         {
             if (paddingX == 0 && paddingY == 0)

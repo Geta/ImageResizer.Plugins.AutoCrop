@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ImageResizer.Plugins.AutoCrop.Extensions;
+using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 
@@ -12,23 +13,34 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
 
         public BoundsAnalyzer(BitmapData bitmap, int colorThreshold, float bucketTreshold)
         {
-            var imageBox = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
-            BorderAnalysis = new BorderAnalyzer(bitmap, colorThreshold, bucketTreshold);
+            var outerBox = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
+            var imageBox = outerBox;
+
+            BorderAnalysis = new BorderAnalyzer(bitmap, imageBox, colorThreshold, bucketTreshold);
 
             if (BorderAnalysis.BorderIsDirty)
             {
-                BoundingBox = imageBox;
+                colorThreshold = (int)Math.Round(colorThreshold * 0.5);
+                bucketTreshold = 1.0f;
+                imageBox = imageBox.Contract(10);
+
+                BorderAnalysis = new BorderAnalyzer(bitmap, imageBox, colorThreshold, bucketTreshold);
+            }
+
+            if (BorderAnalysis.BorderIsDirty)
+            {
+                BoundingBox = outerBox;
                 FoundBoundingBox = false;
             }
             else
             {
                 if (BorderAnalysis.BitsPerPixel == 3)
                 {
-                    BoundingBox = GetBoundingBoxForContentRgb(bitmap, BorderAnalysis.BackgroundColor, colorThreshold);
+                    BoundingBox = GetBoundingBoxForContentRgb(bitmap, BorderAnalysis.Rectangle, BorderAnalysis.BackgroundColor, colorThreshold);
                 }
                 else
                 {
-                    BoundingBox = GetBoundingBoxForContentArgb(bitmap, BorderAnalysis.BackgroundColor, colorThreshold);
+                    BoundingBox = GetBoundingBoxForContentArgb(bitmap, BorderAnalysis.Rectangle, BorderAnalysis.BackgroundColor, colorThreshold);
                 }
 
                 FoundBoundingBox = ValidateRectangle(BoundingBox);
@@ -44,27 +56,27 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             return true;
         }
 
-        private unsafe Rectangle GetBoundingBoxForContentRgb(BitmapData bitmap, Color backgroundColor, int threshold)
+        private unsafe Rectangle GetBoundingBoxForContentRgb(BitmapData bitmap, Rectangle rectangle, Color backgroundColor, int threshold)
         {
             var bpp = Image.GetPixelFormatSize(bitmap.PixelFormat) / 8;
 
-            var h = bitmap.Height;
-            var w = bitmap.Width;
+            var h = rectangle.Bottom;
+            var w = rectangle.Right;
             var s = bitmap.Stride;
             var s0 = (byte*)bitmap.Scan0;
 
             var xn = w;
-            var xm = 0;
+            var xm = rectangle.X;
             var yn = h;
-            var ym = 0;
+            var ym = rectangle.Y;
 
             unchecked
             {
-                for (var y = 0; y < h; y++)
+                for (var y = rectangle.Y; y < h; y++)
                 {
                     var row = s0 + y * s;
 
-                    for (var x = 0; x < w; x++)
+                    for (var x = rectangle.X; x < w; x++)
                     {
                         var p = x * bpp;
                         var b = row[p];
@@ -89,27 +101,27 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             return new Rectangle(xn, yn, xm - xn, ym - yn);
         }
     
-        private unsafe Rectangle GetBoundingBoxForContentArgb(BitmapData bitmap, Color backgroundColor, int threshold)
+        private unsafe Rectangle GetBoundingBoxForContentArgb(BitmapData bitmap, Rectangle rectangle, Color backgroundColor, int threshold)
         {
             var bpp = Image.GetPixelFormatSize(bitmap.PixelFormat) / 8;
 
-            var h = bitmap.Height;
-            var w = bitmap.Width;
+            var h = rectangle.Bottom;
+            var w = rectangle.Right;
             var s = bitmap.Stride;
-            var s0 = (byte*) bitmap.Scan0;
+            var s0 = (byte*)bitmap.Scan0;
 
             var xn = w;
-            var xm = 0;
+            var xm = rectangle.X;
             var yn = h;
-            var ym = 0;
+            var ym = rectangle.Y;
 
             unchecked
             {
-                for (var y = 0; y < h; y++)
+                for (var y = rectangle.Y; y < h; y++)
                 {
                     var row = s0 + y * s;
 
-                    for (var x = 0; x < w; x++)
+                    for (var x = rectangle.X; x < w; x++)
                     {
                         var p = x * bpp;
                         var b = row[p];

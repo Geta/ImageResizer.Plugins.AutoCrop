@@ -25,7 +25,15 @@ namespace ImageResizer.Plugins.AutoCrop.Models
 
             Background = mostPresentColor.Key;
             BucketRatio = buckets[mostPresentBucket] / (float)buckets.Sum(x => x.Value);
-            Success = colors.Count > 0 && (colors.Count < colorThreshold || BucketRatio > bucketThreshold);
+
+            if (bucketThreshold >= 1.0f)
+            {
+                Success = colors.Count > 0 && colors.Count < colorThreshold;
+            }
+            else
+            {
+                Success = colors.Count > 0 && (colors.Count < colorThreshold || BucketRatio > bucketThreshold);
+            }            
         }
 
         public readonly int Colors;
