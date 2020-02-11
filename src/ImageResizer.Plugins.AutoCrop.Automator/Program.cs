@@ -28,10 +28,10 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
         [Option('w', "width", Required = false, HelpText = "Max width of output images.")]
         public int? Width { get; set; }
 
-        [Option('h', "height", Required = false, HelpText = "Max width of output images.")]
+        [Option('h', "height", Required = false, HelpText = "Max height of output images.")]
         public int? Height { get; set; }
 
-        [Option('m', "mode", Required = false, Default = FitMode.None, HelpText = "Fit mode of the image")]
+        [Option('m', "mode", Required = false, Default = FitMode.None, HelpText = "Fit mode of the image (Max, Pad, Crop, Carve or Stretch).")]
         public FitMode Mode { get; set; }
     }
 
