@@ -38,13 +38,13 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
 
     class Program
     {
-        static IPlugin[] _plugins = new IPlugin[]
+        static readonly IPlugin[] _plugins = new IPlugin[]
         {
             new AutoCropPlugin(),
             new FastScalingPlugin()
         };
 
-        static string[] _extensions = new[] 
+        static readonly string[] _extensions = new[] 
         { 
             ".jpg", ".jpeg", ".png" 
         };
@@ -111,7 +111,7 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
         {
             var collection = new NameValueCollection
             {
-                { "autoCrop", $"{options.PadX};{options.PadY};{options.Tolerance}" },
+                { "autocrop", $"{options.PadX};{options.PadY};{options.Tolerance}" },
                 { "fastscale", "true" },
                 { "scale", "both" }
             };

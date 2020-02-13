@@ -13,7 +13,7 @@ namespace ImageResizer.Plugins.AutoCrop.Models
         public int BitsPerPixel;
 
         public bool ShouldPreRender;
-        public RenderInstructions PreRenderInstructions;        
+        public RenderInstructions Instructions;        
 
         public AutoCropState(BoundsAnalyzer analyzer, Bitmap bitmap)
         {

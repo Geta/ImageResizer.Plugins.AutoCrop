@@ -87,6 +87,16 @@ namespace ImageResizer.Plugins.AutoCrop.Extensions
             return new Rectangle(x, y, w, h);
         }
 
+        public static Rectangle Translate(this Rectangle rectangle, Point point)
+        {
+            return new Rectangle(rectangle.X + point.X, rectangle.Y + point.Y, rectangle.Width, rectangle.Height);
+        }
+
+        public static Point Invert(this Point point)
+        {
+            return new Point(-point.X, -point.Y);
+        }
+
         public static Rectangle Expand(this Rectangle rectangle, int paddingX, int paddingY)
         {
             if (paddingX == 0 && paddingY == 0) return rectangle;
