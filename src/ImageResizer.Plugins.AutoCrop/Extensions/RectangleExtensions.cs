@@ -58,6 +58,35 @@ namespace ImageResizer.Plugins.AutoCrop.Extensions
             }
         }
 
+        public static Rectangle Constrain(this Rectangle rectangle, Rectangle other)
+        {
+            var xn = Math.Max(rectangle.Left, other.Left);
+            var yn = Math.Max(rectangle.Top, other.Top);
+            var xm = Math.Min(rectangle.Right, other.Right);
+            var ym = Math.Min(rectangle.Bottom, other.Bottom);
+
+            if (rectangle.X + rectangle.Width > other.X + other.Width)
+                xm -= (rectangle.X + rectangle.Width) - (other.X + other.Width);
+
+            if (rectangle.Y + rectangle.Height > other.Y + other.Height)
+                ym -= (rectangle.Y + rectangle.Height) - (other.Y + other.Height);
+
+            return new Rectangle(xn, yn, xm, ym);
+        }
+
+        public static Rectangle Scale(this Rectangle rectangle, double scale)
+        {
+            if (scale == 1)
+                return rectangle;
+
+            var x = (int)Math.Round(rectangle.X * scale);
+            var y = (int)Math.Round(rectangle.Y * scale);
+            var w = (int)Math.Round(rectangle.Width * scale);
+            var h = (int)Math.Round(rectangle.Height * scale);
+
+            return new Rectangle(x, y, w, h);
+        }
+
         public static Rectangle Expand(this Rectangle rectangle, int paddingX, int paddingY)
         {
             if (paddingX == 0 && paddingY == 0) return rectangle;

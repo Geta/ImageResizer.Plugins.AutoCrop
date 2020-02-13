@@ -8,13 +8,13 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>ImageResizer.Plugins.AutoCrop.Automator</RootNamespace>
     <AssemblyName>ImageResizer.Plugins.AutoCrop.Automator</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -24,7 +24,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -38,6 +38,9 @@
     </Reference>
     <Reference Include="ImageResizer, Version=4.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\ImageResizer.4.0.5\lib\net45\ImageResizer.dll</HintPath>
+    </Reference>
+    <Reference Include="ImageResizer.Plugins.FastScaling, Version=4.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <HintPath>..\..\packages\ImageResizer.Plugins.FastScaling.x64.4.0.5\lib\net45\ImageResizer.Plugins.FastScaling.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Drawing" />

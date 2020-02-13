@@ -6,6 +6,8 @@ namespace ImageResizer.Plugins.AutoCrop.Models
     {
         public Size Size;
         public Rectangle Source;
-        public Rectangle Destination;
+        public Rectangle Target;
+        public Point Translate;
+        public double Scale;
     }
 }

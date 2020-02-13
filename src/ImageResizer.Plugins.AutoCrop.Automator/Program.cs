@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using ImageResizer.Configuration;
+using ImageResizer.Plugins.FastScaling;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -37,6 +38,17 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
 
     class Program
     {
+        static IPlugin[] _plugins = new IPlugin[]
+        {
+            new AutoCropPlugin(),
+            new FastScalingPlugin()
+        };
+
+        static string[] _extensions = new[] 
+        { 
+            ".jpg", ".jpeg", ".png" 
+        };
+
         static void Main(string[] args)
         {
             Parser.Default.ParseArguments<Options>(args)
@@ -99,7 +111,9 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
         {
             var collection = new NameValueCollection
             {
-                { "autoCrop", $"{options.PadX};{options.PadY};{options.Tolerance}" }
+                { "autoCrop", $"{options.PadX};{options.PadY};{options.Tolerance}" },
+                { "fastscale", "true" },
+                { "scale", "both" }
             };
 
             if (options.Width.HasValue)
@@ -116,18 +130,18 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
 
         static void InitializeResizer(Config config)
         {
-            var plugin = new AutoCropPlugin();
-
-            plugin.Install(config);
+            foreach (var plugin in _plugins)
+            {
+                plugin.Install(config);
+            }
         }
 
         static string[] GetFiles(string path)
         {
-            var extensions = new[] { ".jpg", ".jpeg", ".png" };
-            var extensionFilter = new HashSet<string>(extensions, StringComparer.InvariantCultureIgnoreCase);
+            var filter = new HashSet<string>(_extensions, StringComparer.InvariantCultureIgnoreCase);
 
             return Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories)
-                            .Where(x => extensionFilter.Contains(Path.GetExtension(x)))
+                            .Where(x => filter.Contains(Path.GetExtension(x)))
                             .ToArray();
         }
 
