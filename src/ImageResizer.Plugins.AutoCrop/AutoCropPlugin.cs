@@ -61,7 +61,7 @@ namespace ImageResizer.Plugins.AutoCrop
             try
             {
                 var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, bitmap.PixelFormat);
-                var analyzer = new BoundsAnalyzer(data, settings.Threshold, 0.945f);
+                var analyzer = new BoundsAnalyzer(data, settings.Threshold, 0.925f);
 
                 bitmap.UnlockBits(data);
 
@@ -126,7 +126,8 @@ namespace ImageResizer.Plugins.AutoCrop
                     var h = paddedBox.Height;
 
                     var size = new Size(w, h);
-                    var targetSize = size;
+                    var targetW = w;
+                    var targetH = h;
 
                     var offsetX = paddedBox.X;
                     var offsetY = paddedBox.Y;
@@ -134,18 +135,31 @@ namespace ImageResizer.Plugins.AutoCrop
                     var translateX = 0;
                     var translateY = 0;
                         
-                    if (paddedBox.X < 0)
+                    if (offsetX < 0)
                     {
                         offsetX = 0;
                         translateX -= paddedBox.X;
-                        targetSize = new Size(w + paddedBox.X, h);
+                        targetW = w + paddedBox.X;
                     }
 
-                    if (paddedBox.Y < 0)
+                    if (offsetY < 0)
                     {
                         offsetY = 0;
                         translateY -= paddedBox.Y;
-                        targetSize = new Size(w, h + paddedBox.Y);
+                        targetH = h + paddedBox.Y;
+                    }
+
+                    var overlapX = paddedBox.X + w - bitmap.Width;
+                    var overlapY = paddedBox.Y + h - bitmap.Height;
+
+                    if (overlapX > 0)
+                    {
+                        targetW -= overlapX;
+                    }
+
+                    if (overlapY > 0)
+                    {
+                        targetH -= overlapY;
                     }
 
                     state.preRenderBitmap = new Bitmap(w, h, bitmap.PixelFormat);
@@ -158,7 +172,7 @@ namespace ImageResizer.Plugins.AutoCrop
                         Source = bounds,
                         Scale = scale,
                         Translate = new Point(translateX, translateY),
-                        Target = new Rectangle(new Point(offsetX, offsetY), targetSize)
+                        Target = new Rectangle(new Point(offsetX, offsetY), new Size(targetW, targetH))
                     };
                 }
 

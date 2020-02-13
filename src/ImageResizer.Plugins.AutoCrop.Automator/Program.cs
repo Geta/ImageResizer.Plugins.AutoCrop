@@ -32,6 +32,9 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
         [Option('h', "height", Required = false, HelpText = "Max height of output images.")]
         public int? Height { get; set; }
 
+        [Option('d', "debug", Required = false, Default = false, HelpText = "Visualizes crop data on images.")]
+        public bool Debug { get; set; }
+
         [Option('m', "mode", Required = false, Default = FitMode.None, HelpText = "Fit mode of the image (Max, Pad, Crop, Carve or Stretch).")]
         public FitMode Mode { get; set; }
     }
@@ -124,6 +127,9 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
 
             if (options.Mode != FitMode.None)
                 collection.Add("mode", options.Mode.ToString());
+
+            if (options.Debug)
+                collection.Add("autocropdebug", "1");
 
             return new Instructions(collection);
         }

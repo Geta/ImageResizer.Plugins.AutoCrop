@@ -24,7 +24,11 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                 bucketTreshold = 1.0f;
                 imageBox = imageBox.Contract(10);
 
-                BorderAnalysis = new BorderAnalyzer(bitmap, imageBox, colorThreshold, bucketTreshold);
+                var additionalAnalysis = new BorderAnalyzer(bitmap, imageBox, colorThreshold, bucketTreshold);
+                if (!additionalAnalysis.BorderIsDirty)
+                {
+                    BorderAnalysis = additionalAnalysis;
+                }
             }
 
             if (BorderAnalysis.BorderIsDirty)

@@ -5,7 +5,7 @@ namespace ImageResizer.Plugins.AutoCrop.Extensions
 {
     public static class ColorExtensions
     {
-        private static readonly byte _maxBuckets = 50;
+        private static readonly byte _maxBuckets = 25;
         private static readonly double _bytePrecision = 1 / (double)byte.MaxValue;
         private static readonly double _bucketPrecision = _maxBuckets / (double)byte.MaxValue;
 
