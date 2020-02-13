@@ -123,23 +123,28 @@ namespace ImageResizer.Plugins.AutoCrop
                         var h = paddedBox.Height;
 
                         var size = new Size(w, h);
+                        var targetSize = size;
 
-                        var offsetX = 0;
-                        if (w < bitmap.Width)
-                            offsetX = paddedBox.X;
-
-                        var offsetY = 0;
-                        if (h < bitmap.Height)
-                            offsetY = paddedBox.Y;
-
+                        var offsetX = paddedBox.X;
+                        var offsetY = paddedBox.Y;
+                        
                         var translateX = 0;
-                        if (w > bitmap.Width)
-                            translateX = (int)((w - bitmap.Width) * 0.5);
-
                         var translateY = 0;
-                        if (h > bitmap.Height)
-                            translateY = (int)((h - bitmap.Height) * 0.5);
-                                     
+                        
+                        if (paddedBox.X < 0)
+                        {
+                            offsetX = 0;
+                            translateX -= paddedBox.X;
+                            targetSize = new Size(w + paddedBox.X, h);
+                        }
+
+                        if (paddedBox.Y < 0)
+                        {
+                            offsetY = 0;
+                            translateY -= paddedBox.Y;
+                            targetSize = new Size(w, h + paddedBox.Y);
+                        }
+
                         state.preRenderBitmap = new Bitmap(w, h, bitmap.PixelFormat);
                         state.originalSize = size;
 
@@ -150,7 +155,7 @@ namespace ImageResizer.Plugins.AutoCrop
                             Source = bounds,
                             Scale = scale,
                             Translate = new Point(translateX, translateY),
-                            Target = new Rectangle(new Point(offsetX, offsetY), size)
+                            Target = new Rectangle(new Point(offsetX, offsetY), targetSize)
                         };
                     }
 
@@ -201,7 +206,7 @@ namespace ImageResizer.Plugins.AutoCrop
 
                 RawCopy.Copy(state.sourceBitmap, instructions.Target, state.preRenderBitmap, instructions.Translate);
 
-                state.copyRect = new RectangleF(state.copyRect.X + instructions.Translate.X, state.copyRect.Y + instructions.Translate.Y, state.copyRect.Width, state.copyRect.Height);
+                state.copyRect = new RectangleF(state.copyRect.X + instructions.Translate.X, state.copyRect.Y + instructions.Translate.Y, state.copyRect.Width - instructions.Translate.X, state.copyRect.Height - instructions.Translate.Y);
             }
             else
             {
