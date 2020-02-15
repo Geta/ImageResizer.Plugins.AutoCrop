@@ -43,6 +43,9 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
 
         [Option('a', "compositeAlpha", Required = false, Default = true, HelpText = "Use alpha channel compositing (slower).")]
         public bool CompositeAlpha { get; set; }
+
+        [Option('s', "sharpen", Required = false, Default = 0, HelpText = "Amount to sharpen (0-100).")]
+        public int Sharpen { get; set; }
     }
 
     class Program
@@ -127,9 +130,6 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
                 { "scale", "both" }
             };
 
-            if (!options.CompositeAlpha)
-                collection.Add("f.ignorealpha", "true");
-
             if (options.Width.HasValue)
                 collection.Add("width", options.Width.ToString());
 
@@ -139,6 +139,12 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
             if (options.Mode != FitMode.None)
                 collection.Add("mode", options.Mode.ToString());
 
+            if (options.Sharpen > 0)
+               collection.Add("f.sharpen", options.Sharpen.ToString());
+
+            if (!options.CompositeAlpha)
+                collection.Add("f.ignorealpha", "true");
+            
             if (options.Debug)
                 collection.Add("autocropdebug", "1");
 
