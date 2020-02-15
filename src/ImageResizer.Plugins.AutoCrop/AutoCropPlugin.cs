@@ -61,7 +61,7 @@ namespace ImageResizer.Plugins.AutoCrop
             try
             {
                 var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, bitmap.PixelFormat);
-                var analyzer = new BoundsAnalyzer(data, settings.Threshold, 0.925f);
+                var analyzer = new BoundsAnalyzer(data, settings.Threshold, 0.945f);
 
                 bitmap.UnlockBits(data);
 
@@ -221,7 +221,7 @@ namespace ImageResizer.Plugins.AutoCrop
 
                 RawCopy.Copy(state.sourceBitmap, instructions.Target, state.preRenderBitmap, instructions.Translate);
 
-                state.copyRect = new RectangleF(state.copyRect.X + instructions.Translate.X, state.copyRect.Y + instructions.Translate.Y, state.copyRect.Width - instructions.Translate.X, state.copyRect.Height - instructions.Translate.Y);
+                state.copyRect = new RectangleF(0, 0, size.Width, size.Height);
             }
             else
             {
@@ -246,8 +246,13 @@ namespace ImageResizer.Plugins.AutoCrop
                         
                         if (data.ShouldPreRender)
                         {
-                            var offset = instructions.Target.Location.Invert();
-                            rectangle = rectangle.Translate(offset);
+                            var padding = data.Padding;
+                            var width = size.Width - padding.Width * 2;
+                            var height = size.Height - padding.Height * 2;
+                            var offsetX = padding.Width;
+                            var offsetY = padding.Height;
+
+                            rectangle = new Rectangle(offsetX, offsetY, width, height);
                         }                           
 
                         graphics.DrawRectangle(pen, rectangle);

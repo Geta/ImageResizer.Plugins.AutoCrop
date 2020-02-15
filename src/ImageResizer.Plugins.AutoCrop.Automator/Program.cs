@@ -37,6 +37,12 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
 
         [Option('m', "mode", Required = false, Default = FitMode.None, HelpText = "Fit mode of the image (Max, Pad, Crop, Carve or Stretch).")]
         public FitMode Mode { get; set; }
+
+        [Option('c', "cropMode", Required = false, Default = FitMode.Pad, HelpText = "Fit mode if crop is success (Max, Pad, Crop, Carve or Stretch).")]
+        public FitMode CropMode { get; set; }
+
+        [Option('a', "compositeAlpha", Required = false, Default = true, HelpText = "Use alpha channel compositing (slower).")]
+        public bool CompositeAlpha { get; set; }
     }
 
     class Program
@@ -115,9 +121,14 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
             var collection = new NameValueCollection
             {
                 { "autocrop", $"{options.PadX};{options.PadY};{options.Tolerance}" },
+                { "autoCropMode", options.CropMode.ToString() },
                 { "fastscale", "true" },
+                { "down.filter", "CubicSharp" },
                 { "scale", "both" }
             };
+
+            if (!options.CompositeAlpha)
+                collection.Add("f.ignorealpha", "true");
 
             if (options.Width.HasValue)
                 collection.Add("width", options.Width.ToString());

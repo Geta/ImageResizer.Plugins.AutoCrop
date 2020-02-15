@@ -54,7 +54,9 @@
     <Compile Include="Analyzers\BoundsAnalyzer.cs" />
     <Compile Include="AutoCropPlugin.cs" />
     <Compile Include="Extensions\ColorExtensions.cs" />
+    <Compile Include="Extensions\PointExtensions.cs" />
     <Compile Include="Extensions\RectangleExtensions.cs" />
+    <Compile Include="Extensions\SizeExtensions.cs" />
     <Compile Include="Models\AutoCropSettings.cs" />
     <Compile Include="Models\BorderAnalysisResult.cs" />
     <Compile Include="Models\AutoCropState.cs" />
