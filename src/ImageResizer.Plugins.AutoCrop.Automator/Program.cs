@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ImageResizer.Plugins.AutoCrop.Automator
 {
@@ -41,11 +42,17 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
         [Option('c', "cropMode", Required = false, Default = FitMode.Pad, HelpText = "Fit mode if crop is success (Max, Pad, Crop, Carve or Stretch).")]
         public FitMode CropMode { get; set; }
 
+        [Option('q', "quality", Required = false, Default = 90, HelpText = "Output quality (0-100).")]
+        public int Quality { get; set; }
+
         [Option('a', "compositeAlpha", Required = false, Default = true, HelpText = "Use alpha channel compositing (slower).")]
         public bool CompositeAlpha { get; set; }
 
         [Option('s', "sharpen", Required = false, Default = 0, HelpText = "Amount to sharpen (0-100).")]
         public int Sharpen { get; set; }
+
+        [Option('p', "threads", Required = false, Default = 4, HelpText = "Threads to use.")]
+        public int Threads { get; set; }
     }
 
     class Program
@@ -82,8 +89,12 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
                 var files = GetFiles(options.Input);
                 
                 var processed = 0;
+                var parallelOptions = new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = options.Threads,
+                };
                 
-                foreach (var path in files)
+                Parallel.ForEach(files, parallelOptions, path =>
                 {
                     var source = path.Substring(options.Input.Length);
                     var fileName = Path.GetFileName(source);
@@ -97,13 +108,13 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Error processing '{source}', {ex.Message}");
-                        continue;
+                        return;
                     }
 
                     var percentage = (int)Math.Round(++processed / (double)files.Length * 100);
 
                     Console.WriteLine($"{percentage}% ({processed} / {files.Length}), processed '{source}'");
-                }
+                });
             }
             catch (Exception ex)
             {
@@ -126,9 +137,10 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
             {
                 { "autocrop", $"{options.PadX};{options.PadY};{options.Tolerance}" },
                 { "autoCropMode", options.CropMode.ToString() },
+                { "quality", options.Quality.ToString() },
                 { "fastscale", "true" },
                 { "down.filter", "CubicSharp" },
-                { "scale", "both" }
+                { "scale", "both" },
             };
 
             if (options.Width.HasValue)
