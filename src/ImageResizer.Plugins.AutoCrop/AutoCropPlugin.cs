@@ -48,8 +48,11 @@ namespace ImageResizer.Plugins.AutoCrop
             var bitmap = state.sourceBitmap;
             if (!IsRequiredSize(bitmap)) return RequestedAction.None;
 
+            var colorFormat = bitmap.GetColorFormat();
+            if (!IsCorrectColorFormat(colorFormat)) return RequestedAction.None;
+
             var pixelFormat = bitmap.PixelFormat;
-            if (!IsCorrectFormat(pixelFormat)) return RequestedAction.None;
+            if (!IsCorrectPixelFormat(pixelFormat)) return RequestedAction.None;
 
             var setting = state.settings["autoCrop"];
             if (setting == null) return RequestedAction.None;
@@ -335,7 +338,7 @@ namespace ImageResizer.Plugins.AutoCrop
             return IsRequiredSize(bitmap.Width, bitmap.Height);
         }
 
-        protected bool IsRequiredSize(int width, int height)
+        protected static bool IsRequiredSize(int width, int height)
         {
             if (width < 4 && height <= 4) return false;
             if (height < 4 && width <= 4) return false;
@@ -346,7 +349,16 @@ namespace ImageResizer.Plugins.AutoCrop
             return true;
         }
 
-        protected bool IsCorrectFormat(PixelFormat format)
+        protected static bool IsCorrectColorFormat(ImageColorFormat format)
+        {
+            if (format == ImageColorFormat.Cmyk) return false;
+            if (format == ImageColorFormat.Grayscale) return false;
+            if (format == ImageColorFormat.Indexed) return false;
+
+            return true;
+        }
+
+        protected static bool IsCorrectPixelFormat(PixelFormat format)
         {
             var bitsPerPixel = Image.GetPixelFormatSize(format) / 8;
             if (bitsPerPixel < 3) return false;

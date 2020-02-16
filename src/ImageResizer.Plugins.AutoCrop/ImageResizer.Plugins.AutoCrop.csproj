@@ -53,6 +53,7 @@
     <Compile Include="Analyzers\BorderAnalyzer.cs" />
     <Compile Include="Analyzers\BoundsAnalyzer.cs" />
     <Compile Include="AutoCropPlugin.cs" />
+    <Compile Include="Extensions\BitmapExtensions.cs" />
     <Compile Include="Extensions\ColorExtensions.cs" />
     <Compile Include="Extensions\PointExtensions.cs" />
     <Compile Include="Extensions\RectangleExtensions.cs" />
@@ -60,6 +61,7 @@
     <Compile Include="Models\AutoCropSettings.cs" />
     <Compile Include="Models\BorderAnalysisResult.cs" />
     <Compile Include="Models\AutoCropState.cs" />
+    <Compile Include="Models\ImageColorFormat.cs" />
     <Compile Include="Models\RenderInstructions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

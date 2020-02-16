@@ -83,11 +83,12 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
                 
                 var processed = 0;
                 
-                foreach (var source in files)
+                foreach (var path in files)
                 {
+                    var source = path.Substring(options.Input.Length);
                     var fileName = Path.GetFileName(source);
                     var destination = Path.Combine(options.Output, fileName);
-                    var job = new ImageJob(source, destination, instructions);
+                    var job = new ImageJob(path, destination, instructions);
 
                     try
                     {
@@ -95,13 +96,13 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error processing '{fileName}', {ex.Message}");
+                        Console.WriteLine($"Error processing '{source}', {ex.Message}");
                         continue;
                     }
 
                     var percentage = (int)Math.Round(++processed / (double)files.Length * 100);
 
-                    Console.WriteLine($"{percentage}% ({processed} / {files.Length}), processed '{fileName}'");
+                    Console.WriteLine($"{percentage}% ({processed} / {files.Length}), processed '{source}'");
                 }
             }
             catch (Exception ex)
