@@ -4,17 +4,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{C30AB187-A58A-4668-9F46-04C659FFCF7D}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>ImageResizer.Plugins.AutoCrop.Automator</RootNamespace>
-    <AssemblyName>ImageResizer.Plugins.AutoCrop.Automator</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <ProjectGuid>{F73FE33D-6DC3-4FC1-90A9-3AB5E3DC86A5}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ImageResizer.Plugins.MozJpeg</RootNamespace>
+    <AssemblyName>ImageResizer.Plugins.MozJpeg</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>x64</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -22,46 +21,40 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>x64</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CommandLine, Version=2.7.82.0, Culture=neutral, PublicKeyToken=5a870481e358d379, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\CommandLineParser.2.7.82\lib\net45\CommandLine.dll</HintPath>
-    </Reference>
     <Reference Include="ImageResizer, Version=4.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\ImageResizer.4.2.5\lib\net45\ImageResizer.dll</HintPath>
-    </Reference>
-    <Reference Include="ImageResizer.Plugins.FastScaling, Version=4.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\..\packages\ImageResizer.Plugins.FastScaling.x64.4.2.5\lib\net452\ImageResizer.Plugins.FastScaling.dll</HintPath>
+      <HintPath>..\..\packages\ImageResizer.4.0.5\lib\net45\ImageResizer.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Program.cs" />
+    <Compile Include="MozJpegEncoder.cs" />
+    <Compile Include="MozJpegWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Types\ClsArray.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ImageResizer.Plugins.AutoCrop\ImageResizer.Plugins.AutoCrop.csproj">
-      <Project>{4772750f-a0c0-4554-be3b-ec326b862d62}</Project>
-      <Name>ImageResizer.Plugins.AutoCrop</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ImageResizer.Plugins.MozJpeg\ImageResizer.Plugins.MozJpeg.csproj">
-      <Project>{f73fe33d-6dc3-4fc1-90a9-3ab5e3dc86a5}</Project>
-      <Name>ImageResizer.Plugins.MozJpeg</Name>
-    </ProjectReference>
+    <Content Include="turbojpeg_x64.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="turbojpeg_x86.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

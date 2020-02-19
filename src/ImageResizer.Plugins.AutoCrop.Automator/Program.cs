@@ -1,6 +1,7 @@
 ﻿using CommandLine;
 using ImageResizer.Configuration;
 using ImageResizer.Plugins.FastScaling;
+using ImageResizer.Plugins.MozJpeg;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -60,7 +61,8 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
         static readonly IPlugin[] _plugins = new IPlugin[]
         {
             new AutoCropPlugin(),
-            new FastScalingPlugin()
+            new FastScalingPlugin(),
+            new MozJpegEncoder(),
         };
 
         static readonly string[] _extensions = new[] 
@@ -140,7 +142,7 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
                 { "quality", options.Quality.ToString() },
                 { "fastscale", "true" },
                 { "down.filter", "CubicSharp" },
-                { "scale", "both" },
+                { "scale", "both" }
             };
 
             if (options.Width.HasValue)
