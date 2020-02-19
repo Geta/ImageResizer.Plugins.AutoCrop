@@ -18,20 +18,20 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
 
             BorderAnalysis = new BorderAnalyzer(bitmap, imageBox, colorThreshold, bucketTreshold);
 
-            if (BorderAnalysis.BorderIsDirty)
+            if (BorderAnalysis.Failed)
             {
                 colorThreshold = (int)Math.Round(colorThreshold * 0.5);
                 bucketTreshold = 1.0f;
                 imageBox = imageBox.Contract(10);
 
                 var additionalAnalysis = new BorderAnalyzer(bitmap, imageBox, colorThreshold, bucketTreshold);
-                if (!additionalAnalysis.BorderIsDirty)
+                if (!additionalAnalysis.Failed)
                 {
                     BorderAnalysis = additionalAnalysis;
                 }
             }
 
-            if (BorderAnalysis.BorderIsDirty)
+            if (BorderAnalysis.Failed)
             {
                 BoundingBox = outerBox;
                 FoundBoundingBox = false;
