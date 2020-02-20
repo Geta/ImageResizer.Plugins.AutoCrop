@@ -74,7 +74,6 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
                     }
                 }
             }
-            
 
             target.UnlockBits(data);
         }
