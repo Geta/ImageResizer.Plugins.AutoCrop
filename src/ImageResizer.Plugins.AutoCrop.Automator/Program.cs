@@ -62,7 +62,7 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
         {
             new AutoCropPlugin(),
             new FastScalingPlugin(),
-            new MozJpegEncoder(),
+            new MozJpegPlugin(),
         };
 
         static readonly string[] _extensions = new[] 

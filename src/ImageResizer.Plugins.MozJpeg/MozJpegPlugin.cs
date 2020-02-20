@@ -8,7 +8,7 @@ using System.IO;
 
 namespace ImageResizer.Plugins.MozJpeg
 {
-    public class MozJpegEncoder : IPlugin, IEncoder
+    public class MozJpegPlugin : IPlugin, IEncoder
     {
         public bool SupportsTransparency => false;
         public string MimeType => "image/jpg";
@@ -17,8 +17,8 @@ namespace ImageResizer.Plugins.MozJpeg
 
         protected readonly ISet<string> _extensions;
 
-        public MozJpegEncoder() : this(90) { }
-        public MozJpegEncoder(int quality)
+        public MozJpegPlugin() : this(90) { }
+        public MozJpegPlugin(int quality)
         {
             Quality = quality;
 
@@ -39,9 +39,9 @@ namespace ImageResizer.Plugins.MozJpeg
                 var quality = settings.Get<int>("quality");
 
                 if (quality.HasValue)
-                    return new MozJpegEncoder(quality.Value);
+                    return new MozJpegPlugin(quality.Value);
 
-                return new MozJpegEncoder();
+                return new MozJpegPlugin();
             }
 
             return null;
