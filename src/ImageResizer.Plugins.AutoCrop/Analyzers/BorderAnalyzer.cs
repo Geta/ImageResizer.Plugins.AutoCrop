@@ -9,7 +9,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
 {
     public class BorderAnalyzer
     {
-        public readonly bool BorderIsDirty;
+        public readonly bool Failed;
         public readonly int BitsPerPixel;
         public readonly Color BackgroundColor;
         public readonly float BucketRatio;
@@ -33,7 +33,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                 default: result = new BorderAnalysisResult(); break;
             }
 
-            BorderIsDirty = !result.Success;
+            Failed = !result.Success;
             BackgroundColor = result.Background;
             BucketRatio = result.BucketRatio;
         }
