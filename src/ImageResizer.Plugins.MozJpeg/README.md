@@ -36,6 +36,11 @@ Will add the following to `web.config`
 Everything should be set up by just installing the nuget.
 If you want to force usage of this encoder, supply `&format=jpg` to the query string.
 
+## Thanks to
+
+Jose M. Piñeiro for providing a C# wrapper for the encoder.
+https://github.com/JosePineiro/MozJpeg-wrapper
+
 ## Package maintainer
 
 https://github.com/svenrog
