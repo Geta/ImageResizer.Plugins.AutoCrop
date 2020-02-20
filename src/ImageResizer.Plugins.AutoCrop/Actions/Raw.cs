@@ -4,7 +4,7 @@ using System.Drawing.Imaging;
 
 namespace ImageResizer.Plugins.AutoCrop.Actions
 {
-    public static class RawCopy
+    public static class Raw
     {
         public static unsafe void Copy(Bitmap source, Rectangle from, Bitmap target, Point to)
         {

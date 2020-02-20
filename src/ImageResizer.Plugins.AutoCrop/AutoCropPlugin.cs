@@ -215,14 +215,14 @@ namespace ImageResizer.Plugins.AutoCrop
 
                 if (data.BitsPerPixel == 3)
                 {
-                    RawCopy.FillRgb(state.preRenderBitmap, data.BorderColor);
+                    Raw.FillRgb(state.preRenderBitmap, data.BorderColor);
                 }
                 else if (data.BitsPerPixel == 4)
                 {
-                    RawCopy.FillRgba(state.preRenderBitmap, data.BorderColor);
+                    Raw.FillRgba(state.preRenderBitmap, data.BorderColor);
                 }
 
-                RawCopy.Copy(state.sourceBitmap, instructions.Target, state.preRenderBitmap, instructions.Translate);
+                Raw.Copy(state.sourceBitmap, instructions.Target, state.preRenderBitmap, instructions.Translate);
 
                 state.copyRect = new RectangleF(0, 0, size.Width, size.Height);
             }

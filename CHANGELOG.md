@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0]
+
+### Changed
+- Major rewrites to cropping, no GDI+ dependencies left.
+- Debug drawing.
+
+### Added
+- Possibility to integrate with FastScaling plugin.
+- Automator project for batching (on GitHub).
+
+### Fixed
+- Bug with debug rectangle positioning.
+- CMYK image detection (will now skip instead of break).
+
 ## [1.4.5]
 
 ### Fixed
