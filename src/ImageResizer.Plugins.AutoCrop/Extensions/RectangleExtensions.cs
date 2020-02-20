@@ -58,6 +58,42 @@ namespace ImageResizer.Plugins.AutoCrop.Extensions
             }
         }
 
+        public static Rectangle Constrain(this Rectangle rectangle, Rectangle other)
+        {
+            var xn = Math.Max(rectangle.Left, other.Left);
+            var yn = Math.Max(rectangle.Top, other.Top);
+            var xm = Math.Min(rectangle.Right, other.Right);
+            var ym = Math.Min(rectangle.Bottom, other.Bottom);
+
+            if (rectangle.X + rectangle.Width > other.X + other.Width)
+                xm -= (rectangle.X + rectangle.Width) - (other.X + other.Width);
+
+            if (rectangle.Y + rectangle.Height > other.Y + other.Height)
+                ym -= (rectangle.Y + rectangle.Height) - (other.Y + other.Height);
+
+            return new Rectangle(xn, yn, xm, ym);
+        }
+
+        public static Rectangle Scale(this Rectangle rectangle, double scale)
+        {
+            if (scale == 1)
+                return rectangle;
+
+            var x = (int)Math.Round(rectangle.X * scale);
+            var y = (int)Math.Round(rectangle.Y * scale);
+            var w = (int)Math.Round(rectangle.Width * scale);
+            var h = (int)Math.Round(rectangle.Height * scale);
+
+            return new Rectangle(x, y, w, h);
+        }
+
+        public static Rectangle Translate(this Rectangle rectangle, Point point)
+        {
+            return new Rectangle(rectangle.X + point.X, rectangle.Y + point.Y, rectangle.Width, rectangle.Height);
+        }
+
+        
+
         public static Rectangle Expand(this Rectangle rectangle, int paddingX, int paddingY)
         {
             if (paddingX == 0 && paddingY == 0) return rectangle;
@@ -66,6 +102,34 @@ namespace ImageResizer.Plugins.AutoCrop.Extensions
                                  rectangle.Y - paddingY, 
                                  rectangle.Width + paddingX * 2, 
                                  rectangle.Height + paddingY * 2);
+        }
+
+        public static Rectangle Contract(this Rectangle rectangle, double percent)
+        {
+            return Contract(rectangle, percent, percent);
+        }
+
+        public static Rectangle Contract(this Rectangle rectangle, double percentX, double percentY)
+        {
+            if (percentX == 0 && percentY == 0)
+                return rectangle;
+
+            if (percentX > 100) 
+                percentX = 100;
+
+            if (percentY > 100)
+                percentY = 100;
+            
+            var rx = percentX * 0.01 * 0.5;
+            var ry = percentY * 0.01 * 0.5;
+
+            var xn = rectangle.Left + (int)(rectangle.Width * rx);
+            var xm = rectangle.Right - (int)(rectangle.Width * rx);
+            
+            var yn = rectangle.Top + (int)(rectangle.Height * ry);
+            var ym = rectangle.Bottom - (int)(rectangle.Height * ry);
+
+            return new Rectangle(xn, yn, xm - xn, ym - yn);
         }
 
         public static Rectangle Expand(this Rectangle rectangle, int paddingX, int paddingY, int maxWidth, int maxHeight)

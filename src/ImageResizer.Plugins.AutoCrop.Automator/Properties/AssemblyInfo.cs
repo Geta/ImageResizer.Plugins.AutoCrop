@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ImageResizer.Plugins.AutoCropper")]
+[assembly: AssemblyTitle("ImageResizer.Plugins.AutoCrop.Console")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Geta AS")]
-[assembly: AssemblyProduct("ImageResizer.Plugins.AutoCropper")]
-[assembly: AssemblyCopyright("Copyright © Geta AS 2019")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("ImageResizer.Plugins.AutoCrop.Console")]
+[assembly: AssemblyCopyright("Copyright ©  2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("4772750f-a0c0-4554-be3b-ec326b862d62")]
+[assembly: Guid("c30ab187-a58a-4668-9f46-04c659ffcf7d")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.0.0.0")]
-[assembly: AssemblyFileVersion("2.0.0.0")]
+[assembly: AssemblyVersion("2.2.0.0")]
+[assembly: AssemblyFileVersion("2.2.0.0")]

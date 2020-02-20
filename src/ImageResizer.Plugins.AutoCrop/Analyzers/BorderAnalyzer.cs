@@ -1,5 +1,6 @@
 ﻿using ImageResizer.Plugins.AutoCrop.Extensions;
 using ImageResizer.Plugins.AutoCrop.Models;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -12,17 +13,23 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
         public readonly int BitsPerPixel;
         public readonly Color BackgroundColor;
         public readonly float BucketRatio;
+        public readonly Rectangle Rectangle;
 
-        public BorderAnalyzer(BitmapData bitmap, int colorThreshold, float bucketThreshold)
+        public BorderAnalyzer(BitmapData bitmap, Rectangle rectangle, int colorThreshold, float bucketThreshold)
         {
+            var bounds = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
+            if (!bounds.Contains(rectangle))
+                throw new ArgumentException("Rectangle must be inside image bounds", nameof(rectangle));
+
             BitsPerPixel = Image.GetPixelFormatSize(bitmap.PixelFormat) / 8;
+            Rectangle = rectangle;
 
             BorderAnalysisResult result;
 
             switch (BitsPerPixel)
             {
-                case 4: result = AnalyzeArgb(bitmap, colorThreshold, bucketThreshold); break;
-                case 3: result = AnalyzeRgb(bitmap, colorThreshold, bucketThreshold); break;
+                case 4: result = AnalyzeArgb(bitmap, rectangle, colorThreshold, bucketThreshold); break;
+                case 3: result = AnalyzeRgb(bitmap, rectangle, colorThreshold, bucketThreshold); break;
                 default: result = new BorderAnalysisResult(); break;
             }
 
@@ -31,7 +38,13 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             BucketRatio = result.BucketRatio;
         }
 
-        private unsafe BorderAnalysisResult AnalyzeRgb(BitmapData bitmap, int colorThreshold, float bucketThreshold)
+        public BorderAnalyzer(BitmapData bitmap, int colorThreshold, float bucketThreshold) : 
+            this(bitmap, new Rectangle(0, 0, bitmap.Width, bitmap.Height), colorThreshold, bucketThreshold)
+        { 
+        
+        }
+
+        private unsafe BorderAnalysisResult AnalyzeRgb(BitmapData bitmap, Rectangle rectangle, int colorThreshold, float bucketThreshold)
         {
             var h = bitmap.Height;
             var w = bitmap.Width;
@@ -47,7 +60,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                 {
                     var row = s0 + y * s;
                     
-                    var p = 0 * BitsPerPixel;
+                    var p = rectangle.Left * BitsPerPixel;
                     var b = row[p];
                     var g = row[p + 1];
                     var r = row[p + 2];
@@ -78,7 +91,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                 {
                     var row = s0 + y * s;
                     
-                    var p = (w - 1) * BitsPerPixel;
+                    var p = (rectangle.Right - 1) * BitsPerPixel;
                     var b = row[p];
                     var g = row[p + 1];
                     var r = row[p + 2];
@@ -107,7 +120,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
 
                 for (var x = 0; x < w; x++)
                 {
-                    var row = s0 + 0 * s;
+                    var row = s0 + rectangle.Top * s;
                     
                     var p = x * BitsPerPixel;
                     var b = row[p];
@@ -138,7 +151,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
 
                 for (var x = 0; x < w; x++)
                 {
-                    var row = s0 + (h - 1) * s;
+                    var row = s0 + (rectangle.Bottom - 1) * s;
                     
                     var p = x * BitsPerPixel;
                     var b = row[p];
@@ -171,7 +184,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             return new BorderAnalysisResult(colors, buckets, colorThreshold, bucketThreshold);
         }
 
-        private unsafe BorderAnalysisResult AnalyzeArgb(BitmapData bitmap, int colorThreshold, float bucketThreshold)
+        private unsafe BorderAnalysisResult AnalyzeArgb(BitmapData bitmap, Rectangle rectangle, int colorThreshold, float bucketThreshold)
         {
             var h = bitmap.Height;
             var w = bitmap.Width;
@@ -186,8 +199,8 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                 for (var y = 0; y < h; y++)
                 {
                     var row = s0 + y * s;
-                    
-                    var p = 0 * BitsPerPixel;
+
+                    var p = rectangle.Left * BitsPerPixel;
                     var b = row[p];
                     var g = row[p + 1];
                     var r = row[p + 2];
@@ -219,7 +232,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                 {
                     var row = s0 + y * s;
                     
-                    var p = (w - 1) * BitsPerPixel;
+                    var p = (rectangle.Right - 1) * BitsPerPixel;
                     var b = row[p];
                     var g = row[p + 1];
                     var r = row[p + 2];
@@ -249,8 +262,8 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
 
                 for (var x = 0; x < w; x++)
                 {
-                    var row = s0 + 0 * s;
-                    
+                    var row = s0 + rectangle.Top * s;
+
                     var p = x * BitsPerPixel;
                     var b = row[p];
                     var g = row[p + 1];
@@ -281,8 +294,8 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
 
                 for (var x = 0; x < w; x++)
                 {
-                    var row = s0 + (h - 1) * s;
-                    
+                    var row = s0 + (rectangle.Bottom - 1) * s;
+
                     var p = x * BitsPerPixel;
                     var b = row[p];
                     var g = row[p + 1];

@@ -1,18 +1,27 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 
 namespace ImageResizer.Plugins.AutoCrop.Extensions
 {
     public static class ColorExtensions
     {
-        private static readonly int _maxBuckets = 50;
-        private static readonly double _bucketPrecision = _maxBuckets / (double)(byte.MaxValue * byte.MaxValue);
+        private static readonly byte _maxBuckets = 20;
+        private static readonly double _bytePrecision = 1 / (double)byte.MaxValue;
+        private static readonly double _bucketPrecision = (_maxBuckets + 1) / (double)byte.MaxValue;
 
-        public static int ToColorBucket(this Color color)
+        public static byte ToColorBucket(this Color color)
         {
-            return (int)((0.299 * color.R + 0.587 * color.G + 0.114 * color.B) * color.A * _bucketPrecision);
+            return (byte)Math.Min(_maxBuckets, Math.Floor(ToGrayscale(color) * _bucketPrecision));
         }
 
-        public static int GetMaxColorBuckets()
+        public static byte ToGrayscale(this Color color)
+        {
+            var mix = (uint)(0.299 * color.R + 0.587 * color.G + 0.114 * color.B);
+
+            return (byte)Math.Min(byte.MaxValue, mix * (color.A * _bytePrecision) + (byte.MaxValue - color.A));
+        }
+
+        public static byte GetMaxColorBuckets()
         {
             return _maxBuckets;
         }
