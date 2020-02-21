@@ -142,6 +142,7 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
                 { "quality", options.Quality.ToString() },
                 { "fastscale", "true" },
                 { "down.filter", "CubicSharp" },
+                { "down.speed", "-2" },
                 { "scale", "both" }
             };
 
