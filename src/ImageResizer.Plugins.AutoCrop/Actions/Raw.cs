@@ -47,6 +47,36 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
             target.UnlockBits(targetData);
         }
 
+        public static unsafe void FillAlpha(Bitmap target)
+        {
+            if (target == null) throw new ArgumentNullException(nameof(target));
+
+            var bpp = Image.GetPixelFormatSize(target.PixelFormat) / 8;
+            if (bpp < 4) 
+                return;
+
+            var w = target.Width;
+            var h = target.Height;
+            var data = target.LockBits(new Rectangle(0, 0, w, h), ImageLockMode.WriteOnly, target.PixelFormat);
+            var s0 = (byte*)data.Scan0;
+            var s = data.Stride;
+
+            unchecked
+            {
+                for (var y = 0; y < h; y++)
+                {
+                    var row = s0 + y * s;
+
+                    for (var x = 0; x < w; x++)
+                    {
+                        row[x * bpp + 3] = byte.MaxValue;
+                    }
+                }
+            }
+
+            target.UnlockBits(data);
+        }
+
         public static unsafe void FillRgb(Bitmap target, Color color)
         {            
             if (target == null) throw new ArgumentNullException(nameof(target));

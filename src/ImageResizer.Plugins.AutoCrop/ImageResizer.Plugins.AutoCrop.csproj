@@ -49,6 +49,7 @@
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Actions\Filter.cs" />
     <Compile Include="Actions\Raw.cs" />
     <Compile Include="Analyzers\BorderAnalyzer.cs" />
     <Compile Include="Analyzers\BoundsAnalyzer.cs" />

@@ -67,7 +67,7 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
 
         static readonly string[] _extensions = new[] 
         { 
-            ".jpg", ".jpeg", ".png" 
+            ".jpg", ".jpeg", //".png" 
         };
 
         static void Main(string[] args)

@@ -239,6 +239,8 @@ namespace ImageResizer.Plugins.AutoCrop
                 if (state.preRenderBitmap == null)
                     state.preRenderBitmap = new Bitmap(state.sourceBitmap);
                 
+                state.preRenderBitmap = Filter.Sobel(state.preRenderBitmap);
+
                 using (var graphics = Graphics.FromImage(state.preRenderBitmap))
                 {
                     graphics.SmoothingMode = SmoothingMode.AntiAlias;
@@ -262,7 +264,7 @@ namespace ImageResizer.Plugins.AutoCrop
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // ignore
             }
