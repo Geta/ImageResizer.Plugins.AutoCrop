@@ -6,13 +6,14 @@ using System.Linq;
 
 namespace ImageResizer.Plugins.AutoCrop.Models
 {
-    public class BorderAnalysisResult
+    public class BorderAnalysis
     {
-        public BorderAnalysisResult()
+        public BorderAnalysis()
         {
+
         }
 
-        public BorderAnalysisResult(IDictionary<Color, int> colors, IDictionary<int, int> buckets, int colorThreshold, float bucketThreshold)
+        public BorderAnalysis(IDictionary<Color, int> colors, IDictionary<int, int> buckets, int colorThreshold, float bucketThreshold)
         {
             if (colors == null) throw new ArgumentNullException(nameof(colors));
 

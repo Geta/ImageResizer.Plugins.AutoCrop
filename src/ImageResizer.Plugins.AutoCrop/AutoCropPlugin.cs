@@ -64,13 +64,14 @@ namespace ImageResizer.Plugins.AutoCrop
             try
             {
                 var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, bitmap.PixelFormat);
-                var analyzer = new BoundsAnalyzer(data, settings.Threshold, 0.945f);
+                var analyzer = GetAnalyzer(data, settings);
+                var analysis = analyzer.GetAnalysis();
 
                 bitmap.UnlockBits(data);
 
-                if (analyzer.FoundBoundingBox)
+                if (analysis.Success)
                 {
-                    state.Data[DataKey] = new AutoCropState(analyzer, bitmap);
+                    state.Data[DataKey] = new AutoCropState(analysis, bitmap);
                 }
             }
             catch (Exception)
@@ -270,6 +271,11 @@ namespace ImageResizer.Plugins.AutoCrop
             }
 
             return RequestedAction.None;
+        }
+
+        protected virtual IAnalyzer GetAnalyzer(BitmapData data, AutoCropSettings settings)
+        {
+            return new BoundsAnalyzer(data, settings.Threshold, 0.945f);
         }
 
         protected int GetPadding(int percentage, int dimension)

@@ -1,54 +1,67 @@
 ﻿using ImageResizer.Plugins.AutoCrop.Extensions;
+using ImageResizer.Plugins.AutoCrop.Models;
+using ImageResizer.Plugins.AutoCrop.Detection;
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 
 namespace ImageResizer.Plugins.AutoCrop.Analyzers
 {
-    public class BoundsAnalyzer
+    public class BoundsAnalyzer : IAnalyzer
     {
-        public readonly bool FoundBoundingBox;
-        public readonly Rectangle BoundingBox;
-        public readonly BorderAnalyzer BorderAnalysis;
+        private readonly bool _foundBoundingBox;
+        private readonly Rectangle _boundingBox;
+        private readonly IAnalysis _analysis;
 
         public BoundsAnalyzer(BitmapData bitmap, int colorThreshold, float bucketTreshold)
         {
             var outerBox = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
             var imageBox = outerBox;
 
-            BorderAnalysis = new BorderAnalyzer(bitmap, imageBox, colorThreshold, bucketTreshold);
-
-            if (BorderAnalysis.Failed)
+            var borderInspection = new BorderInspector(bitmap, imageBox, colorThreshold, bucketTreshold);
+            if (borderInspection.Failed)
             {
                 colorThreshold = (int)Math.Round(colorThreshold * 0.5);
                 bucketTreshold = 1.0f;
                 imageBox = imageBox.Contract(10);
 
-                var additionalAnalysis = new BorderAnalyzer(bitmap, imageBox, colorThreshold, bucketTreshold);
-                if (!additionalAnalysis.Failed)
+                var additionalInspection = new BorderInspector(bitmap, imageBox, colorThreshold, bucketTreshold);
+                if (!additionalInspection.Failed)
                 {
-                    BorderAnalysis = additionalAnalysis;
+                    borderInspection = additionalInspection;
                 }
             }
 
-            if (BorderAnalysis.Failed)
+            if (borderInspection.Failed)
             {
-                BoundingBox = outerBox;
-                FoundBoundingBox = false;
+                _boundingBox = outerBox;
+                _foundBoundingBox = false;
             }
             else
             {
-                if (BorderAnalysis.BitsPerPixel == 3)
+                if (borderInspection.BitsPerPixel == 3)
                 {
-                    BoundingBox = GetBoundingBoxForContentRgb(bitmap, BorderAnalysis.Rectangle, BorderAnalysis.BackgroundColor, colorThreshold);
+                    _boundingBox = GetBoundingBoxForContentRgb(bitmap, borderInspection.Rectangle, borderInspection.BackgroundColor, colorThreshold);
                 }
                 else
                 {
-                    BoundingBox = GetBoundingBoxForContentArgb(bitmap, BorderAnalysis.Rectangle, BorderAnalysis.BackgroundColor, colorThreshold);
+                    _boundingBox = GetBoundingBoxForContentArgb(bitmap, borderInspection.Rectangle, borderInspection.BackgroundColor, colorThreshold);
                 }
 
-                FoundBoundingBox = ValidateRectangle(BoundingBox);
+                _foundBoundingBox = ValidateRectangle(_boundingBox);
             }
+
+            _analysis = new ImageAnalysis
+            {
+                Background = borderInspection.BackgroundColor,
+                BoundingBox = _boundingBox,
+                Success = _foundBoundingBox
+            };
+        }
+
+        public IAnalysis GetAnalysis()
+        {
+            return _analysis;
         }
 
         private bool ValidateRectangle(Rectangle rectangle)

@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 
-namespace ImageResizer.Plugins.AutoCrop.Analyzers
+namespace ImageResizer.Plugins.AutoCrop.Detection
 {
-    public class BorderAnalyzer
+    public class BorderInspector
     {
         public readonly bool Failed;
         public readonly int BitsPerPixel;
@@ -15,7 +15,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
         public readonly float BucketRatio;
         public readonly Rectangle Rectangle;
 
-        public BorderAnalyzer(BitmapData bitmap, Rectangle rectangle, int colorThreshold, float bucketThreshold)
+        public BorderInspector(BitmapData bitmap, Rectangle rectangle, int colorThreshold, float bucketThreshold)
         {
             var bounds = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
             if (!bounds.Contains(rectangle))
@@ -24,13 +24,13 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             BitsPerPixel = Image.GetPixelFormatSize(bitmap.PixelFormat) / 8;
             Rectangle = rectangle;
 
-            BorderAnalysisResult result;
+            BorderAnalysis result;
 
             switch (BitsPerPixel)
             {
                 case 4: result = AnalyzeArgb(bitmap, rectangle, colorThreshold, bucketThreshold); break;
                 case 3: result = AnalyzeRgb(bitmap, rectangle, colorThreshold, bucketThreshold); break;
-                default: result = new BorderAnalysisResult(); break;
+                default: result = new BorderAnalysis(); break;
             }
 
             Failed = !result.Success;
@@ -38,13 +38,13 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             BucketRatio = result.BucketRatio;
         }
 
-        public BorderAnalyzer(BitmapData bitmap, int colorThreshold, float bucketThreshold) : 
+        public BorderInspector(BitmapData bitmap, int colorThreshold, float bucketThreshold) : 
             this(bitmap, new Rectangle(0, 0, bitmap.Width, bitmap.Height), colorThreshold, bucketThreshold)
         { 
         
         }
 
-        private unsafe BorderAnalysisResult AnalyzeRgb(BitmapData bitmap, Rectangle rectangle, int colorThreshold, float bucketThreshold)
+        private unsafe BorderAnalysis AnalyzeRgb(BitmapData bitmap, Rectangle rectangle, int colorThreshold, float bucketThreshold)
         {
             var h = bitmap.Height;
             var w = bitmap.Width;
@@ -181,10 +181,10 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                 }
             }
             
-            return new BorderAnalysisResult(colors, buckets, colorThreshold, bucketThreshold);
+            return new BorderAnalysis(colors, buckets, colorThreshold, bucketThreshold);
         }
 
-        private unsafe BorderAnalysisResult AnalyzeArgb(BitmapData bitmap, Rectangle rectangle, int colorThreshold, float bucketThreshold)
+        private unsafe BorderAnalysis AnalyzeArgb(BitmapData bitmap, Rectangle rectangle, int colorThreshold, float bucketThreshold)
         {
             var h = bitmap.Height;
             var w = bitmap.Width;
@@ -325,7 +325,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                 }
             }
 
-            return new BorderAnalysisResult(colors, buckets, colorThreshold, bucketThreshold);
+            return new BorderAnalysis(colors, buckets, colorThreshold, bucketThreshold);
         }
     }
 }

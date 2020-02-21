@@ -144,11 +144,22 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
 
-            var pixelFormat = source.PixelFormat;
-            var bpp = Image.GetPixelFormatSize(pixelFormat) / 8;
-            var target = new Bitmap(width, height, source.PixelFormat);
+            var sourceData = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, source.PixelFormat);
+            var target = Approximate(sourceData, width, height);
 
-            var sourceData = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, pixelFormat);
+            source.UnlockBits(sourceData);
+            
+            return target;
+        }
+
+        public static unsafe Bitmap Approximate(BitmapData sourceData, int width, int height)
+        {
+            if (sourceData == null) throw new ArgumentNullException(nameof(sourceData));
+
+            var pixelFormat = sourceData.PixelFormat;
+            var bpp = Image.GetPixelFormatSize(pixelFormat) / 8;
+            var target = new Bitmap(width, height, sourceData.PixelFormat);
+
             var targetData = target.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, pixelFormat);
 
             var ss0 = (byte*)sourceData.Scan0;
@@ -156,8 +167,8 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
             var ss = sourceData.Stride;
             var ts = targetData.Stride;
 
-            var stepX = source.Width / (float)width;
-            var stepY = source.Height / (float)height;
+            var stepX = sourceData.Width / (float)width;
+            var stepY = sourceData.Height / (float)height;
 
             unchecked
             {
@@ -179,7 +190,6 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
                 }
             }
 
-            source.UnlockBits(sourceData);
             target.UnlockBits(targetData);
 
             return target;
