@@ -128,7 +128,7 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
                         var p = x * bpp;
                         var v = (byte)(0.299 * row[p + 2] + 0.587 * row[p + 1] + 0.114 * row[p]);
 
-                        row[p] = row[p + 1] = row[p + 3] = v;
+                        row[p] = row[p + 1] = row[p + 2] = v;
                     }
                 }
             }
