@@ -32,6 +32,7 @@ namespace ImageResizer.Plugins.AutoCrop
             {
                 "autoCrop",
                 "autoCropMode",
+                "autoCropMethod",
                 "autoCropDebug"
             };
         }
@@ -57,23 +58,24 @@ namespace ImageResizer.Plugins.AutoCrop
             var setting = state.settings["autoCrop"];
             if (setting == null) return RequestedAction.None;
 
-            var settings = ParseSettings(setting, state.settings["autoCropMode"], state.settings["autoCropDebug"]);
+            var settings = ParseSettings(setting, state.settings["autoCropMode"], state.settings["autoCropMethod"], state.settings["autoCropDebug"]);
 
             state.Data[SettingsKey] = settings;
 
             try
             {
                 var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, bitmap.PixelFormat);
-                var analyzer = new BoundsAnalyzer(data, settings.Threshold, 0.945f);
+                var analyzer = GetAnalyzer(data, settings);
+                var analysis = analyzer.GetAnalysis();
 
                 bitmap.UnlockBits(data);
 
-                if (analyzer.FoundBoundingBox)
+                if (analysis.Success)
                 {
-                    state.Data[DataKey] = new AutoCropState(analyzer, bitmap);
+                    state.Data[DataKey] = new AutoCropState(analysis, bitmap);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // ignore
             }
@@ -179,23 +181,16 @@ namespace ImageResizer.Plugins.AutoCrop
                     };
                 }
 
-                if (settings.SetMode)
-                {
-                    state.settings.Mode = settings.Mode;
-                }
-
-                if (state.settings.BackgroundColor.Equals(Color.Transparent))
-                {
-                    state.settings.BackgroundColor = data.BorderColor;
-                }
+                SetMode(state, data, settings);
+                SetBackground(state, data, settings);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // ignore
             }
 
             return RequestedAction.None;
-        }
+        }        
 
         protected override RequestedAction PreRenderImage(ImageState state)
         {
@@ -238,12 +233,26 @@ namespace ImageResizer.Plugins.AutoCrop
             {
                 if (state.preRenderBitmap == null)
                     state.preRenderBitmap = new Bitmap(state.sourceBitmap);
-                
+
+                if (settings.Method == AutoCropMethod.Edge)
+                {
+                    // Display graphics as analyzer sees it.
+                    state.preRenderBitmap = Filter.Sobel(state.preRenderBitmap);   
+                }
+                else
+                {
+                    Filter.Buckets(state.preRenderBitmap);
+                }                
+
+                // Establish a drawing canvas
                 using (var graphics = Graphics.FromImage(state.preRenderBitmap))
                 {
                     graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-                    using (var pen = new Pen(Color.Red, 4))
+                    // Render the detected bounding box in red
+                    var brushSize = 2 * (1 / instructions.Scale);
+
+                    using (var pen = new Pen(Color.Red, (int)brushSize))
                     {
                         var rectangle = instructions.Source;
                         
@@ -262,12 +271,49 @@ namespace ImageResizer.Plugins.AutoCrop
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // ignore
             }
 
             return RequestedAction.None;
+        }
+
+        protected virtual void SetMode(ImageState state, AutoCropState data, AutoCropSettings settings)
+        {
+            if (settings.SetMode)
+            {
+                state.settings.Mode = settings.Mode;
+            }
+        }
+
+        protected virtual void SetBackground(ImageState state, AutoCropState data, AutoCropSettings settings)
+        {
+            if (settings.Debug)
+            {
+                if (settings.Method == AutoCropMethod.Edge)
+                {
+                    state.settings.BackgroundColor = Color.FromArgb(255, 0, 0, 0);
+                }
+                else
+                {
+                    var backgroundColor = state.settings.BackgroundColor;
+                    state.settings.BackgroundColor = backgroundColor.ToColorBucket().ToColor();
+                }
+            }
+
+            if (state.settings.BackgroundColor.Equals(Color.Transparent))
+            {
+                state.settings.BackgroundColor = data.BorderColor;
+            }
+        }
+
+        protected virtual IAnalyzer GetAnalyzer(BitmapData data, AutoCropSettings settings)
+        {
+            if (settings.Method == AutoCropMethod.Edge)
+                return new SobelAnalyzer(data, settings.Threshold, 0.945f);
+            
+            return new BoundsAnalyzer(data, settings.Threshold, 0.945f);
         }
 
         protected int GetPadding(int percentage, int dimension)
@@ -294,7 +340,7 @@ namespace ImageResizer.Plugins.AutoCrop
             return new Size(width, height);
         }
 
-        protected AutoCropSettings ParseSettings(string settingsValue, string modeValue = null, string debugValue = null)
+        protected AutoCropSettings ParseSettings(string settingsValue, string modeValue = null, string methodValue = null, string debugValue = null)
         {
             var result = new AutoCropSettings();
             if (settingsValue == null) return result;
@@ -321,6 +367,11 @@ namespace ImageResizer.Plugins.AutoCrop
             else
             {
                 result.PadY = Math.Max(padX, 0);
+            }
+
+            if (Enum.TryParse(methodValue, true, out AutoCropMethod autoCropMethod))
+            {
+                result.Method = autoCropMethod;
             }
 
             if (Enum.TryParse(modeValue, true, out FitMode fitMode))

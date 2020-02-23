@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+    <metadata>
+        <id>ImageResizer.Plugins.MozJpeg</id>
+        <version>1.0.0</version>
+        <title>ImageResizer.Plugins.MozJpeg</title>
+        <authors>Geta AS</authors>
+        <owners>Geta AS</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Better jpg encoding.</description>
+        <projectUrl>https://github.com/geta/imageresizer.plugins.autocrop/tree/master/src/ImageResizer.Plugins.MozJpeg/</projectUrl>
+        <copyright>Copyright © Geta 2019</copyright>
+        <dependencies>
+            <group targetFramework=".NETFramework4.5">
+                <dependency id="ImageResizer" version="4.0.5" />
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="content\web.config.transform" target="content\" />
+        <file src="bin\turbojpeg_x64.dll" target="Build\" />
+        <file src="bin\turbojpeg_x86.dll" target="Build\" />
+        <file src="ImageResizer.Plugins.MozJpeg.targets" target="Build\" />
+    </files>
+</package>

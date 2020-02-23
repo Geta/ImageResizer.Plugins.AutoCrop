@@ -1,5 +1,4 @@
-﻿using ImageResizer.Plugins.AutoCrop.Analyzers;
-using System.Drawing;
+﻿using System.Drawing;
 
 namespace ImageResizer.Plugins.AutoCrop.Models
 {
@@ -15,11 +14,11 @@ namespace ImageResizer.Plugins.AutoCrop.Models
         public bool ShouldPreRender;
         public RenderInstructions Instructions;        
 
-        public AutoCropState(BoundsAnalyzer analyzer, Bitmap bitmap)
+        public AutoCropState(IAnalysis analysis, Bitmap bitmap)
         {
-            Bounds = analyzer.BoundingBox;
-            BitsPerPixel = analyzer.BorderAnalysis.BitsPerPixel;
-            BorderColor = analyzer.BorderAnalysis.BackgroundColor;
+            Bounds = analysis.BoundingBox;
+            BitsPerPixel = Image.GetPixelFormatSize(bitmap.PixelFormat) / 8;
+            BorderColor = analysis.Background;
             OriginalDimensions = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
         }
     }
