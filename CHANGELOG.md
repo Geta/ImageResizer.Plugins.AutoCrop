@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0]
+
+### Added
+- Added edge detection based cropping method.
+
+### Changed
+- Debug mode will now render the entire image as the selected analyzer sees it, in addition to the evaluated bounding box.
+
 ## [2.0.0]
 
 ### Changed

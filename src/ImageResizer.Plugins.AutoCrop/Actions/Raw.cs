@@ -47,6 +47,44 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
             target.UnlockBits(targetData);
         }
 
+        public static unsafe void FillAlpha(Bitmap target)
+        {
+            if (target == null) throw new ArgumentNullException(nameof(target));
+
+            var data = target.LockBits(new Rectangle(0, 0, target.Width, target.Height), ImageLockMode.WriteOnly, target.PixelFormat);
+            FillAlpha(data);
+
+            target.UnlockBits(data);
+        }
+
+        public static unsafe void FillAlpha(BitmapData target)
+        {
+            if (target == null) throw new ArgumentNullException(nameof(target));
+
+            var bpp = Image.GetPixelFormatSize(target.PixelFormat) / 8;
+            if (bpp < 4)
+                return;
+
+            var w = target.Width;
+            var h = target.Height;
+            
+            var s0 = (byte*)target.Scan0;
+            var s = target.Stride;
+
+            unchecked
+            {
+                for (var y = 0; y < h; y++)
+                {
+                    var row = s0 + y * s;
+
+                    for (var x = 0; x < w; x++)
+                    {
+                        row[x * bpp + 3] = byte.MaxValue;
+                    }
+                }
+            }
+        }
+
         public static unsafe void FillRgb(Bitmap target, Color color)
         {            
             if (target == null) throw new ArgumentNullException(nameof(target));
@@ -114,20 +152,37 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
 
-            var pixelFormat = source.PixelFormat;
-            var bpp = Image.GetPixelFormatSize(pixelFormat) / 8;
-            var target = new Bitmap(width, height, source.PixelFormat);
+            var sourceData = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, source.PixelFormat);
+            var target = Approximate(sourceData, width, height);
 
-            var sourceData = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, pixelFormat);
+            source.UnlockBits(sourceData);
+            
+            return target;
+        }
+
+        public static unsafe Bitmap Approximate(BitmapData sourceData, int width, int height)
+        {
+            if (sourceData == null) throw new ArgumentNullException(nameof(sourceData));
+
+            if (width > sourceData.Width)
+                width = sourceData.Width;
+
+            if (height > sourceData.Height)
+                height = sourceData.Height;
+
+            var pixelFormat = sourceData.PixelFormat;
+            var target = new Bitmap(width, height, pixelFormat);
             var targetData = target.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, pixelFormat);
+
+            var bpp = Image.GetPixelFormatSize(pixelFormat) / 8;
 
             var ss0 = (byte*)sourceData.Scan0;
             var ts0 = (byte*)targetData.Scan0;
             var ss = sourceData.Stride;
             var ts = targetData.Stride;
 
-            var stepX = source.Width / (float)width;
-            var stepY = source.Height / (float)height;
+            var stepX = sourceData.Width / (float)width;
+            var stepY = sourceData.Height / (float)height;
 
             unchecked
             {
@@ -149,7 +204,6 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
                 }
             }
 
-            source.UnlockBits(sourceData);
             target.UnlockBits(targetData);
 
             return target;

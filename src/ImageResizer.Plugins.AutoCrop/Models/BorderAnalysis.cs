@@ -6,13 +6,14 @@ using System.Linq;
 
 namespace ImageResizer.Plugins.AutoCrop.Models
 {
-    public class BorderAnalysisResult
+    public class BorderAnalysis
     {
-        public BorderAnalysisResult()
+        public BorderAnalysis()
         {
+
         }
 
-        public BorderAnalysisResult(IDictionary<Color, int> colors, IDictionary<int, int> buckets, int colorThreshold, float bucketThreshold)
+        public BorderAnalysis(IDictionary<Color, int> colors, IDictionary<int, int> buckets, int colorThreshold, float bucketThreshold)
         {
             if (colors == null) throw new ArgumentNullException(nameof(colors));
 
@@ -24,13 +25,21 @@ namespace ImageResizer.Plugins.AutoCrop.Models
             var mostPresentBucket = mostPresentColor.Key.ToColorBucket();
 
             Background = mostPresentColor.Key;
-            BucketRatio = buckets[mostPresentBucket] / (float)buckets.Sum(x => x.Value);
+
+            if (buckets.Count > 0)
+            {
+                BucketRatio = buckets[mostPresentBucket] / (float)buckets.Sum(x => x.Value);
+            }
+            else
+            {
+                BucketRatio = 1;
+            }            
 
             if (bucketThreshold >= 1.0f)
             {
                 Success = colors.Count > 0 && colors.Count < colorThreshold;
             }
-            else
+            else 
             {
                 Success = colors.Count > 0 && (colors.Count < colorThreshold || BucketRatio > bucketThreshold);
             }            

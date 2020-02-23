@@ -5,14 +5,15 @@
 Automatic cropping for images with a flat background.
 Works with ImageResizer.NET 4.0.5 and above.
 
-Uses a relative luminance tolerance bounding box to determine which area to crop.
-Preserves original aspect ratio or image.
+Uses either a relative luminance tolerance or an edge detection filter to determine which area to crop.
+Preserves intended aspect ratio of image.
 
 ## Features
 
 - Crops images with a flat background
 - Configurable x and y padding
-- Configurable color difference treshold
+- Configurable treshold
+- Configurable analysis method (color difference or edge detection)
 - Can override FitMode of regular resizer
 
 ## How to get started?
@@ -43,8 +44,9 @@ Plugin unlocks the ability to use the following query parameters for images
 | _x-padding_ | the first provided parameter value | 10 |
 | _y-padding_ | the second provided parameter value | 10;_20_ |
 | _threshold_ | the third provided parameter value, background color deviation threshold | 10;20;_30_ |
-| autoCropMode | overrides the fit mode if the autoCrop is successfully completed | _?autoCropMode=pad_ |
-| autoCropDebug | displays a debug visualisation of how the plugin evaluated instead of cropping | _?autoCropDebug=1_ |
+| autoCropMode (optional) | overrides the fit mode if the autoCrop is successfully completed | _?autoCropMode=pad_ |
+| autoCropMethod (optional) | determines which method to use (tolerance or edge) | _?autoCropMethod=tolerance_ |
+| autoCropDebug (optional) | displays a debug visualisation of how the plugin evaluated instead of cropping | _?autoCropDebug=1_ |
 
 ## Package maintainer
 

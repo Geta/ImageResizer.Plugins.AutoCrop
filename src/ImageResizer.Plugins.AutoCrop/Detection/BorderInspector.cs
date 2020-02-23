@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 
-namespace ImageResizer.Plugins.AutoCrop.Analyzers
+namespace ImageResizer.Plugins.AutoCrop.Detection
 {
-    public class BorderAnalyzer
+    public class BorderInspector
     {
         public readonly bool Failed;
         public readonly int BitsPerPixel;
@@ -15,7 +15,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
         public readonly float BucketRatio;
         public readonly Rectangle Rectangle;
 
-        public BorderAnalyzer(BitmapData bitmap, Rectangle rectangle, int colorThreshold, float bucketThreshold)
+        public BorderInspector(BitmapData bitmap, Rectangle rectangle, int colorThreshold, float bucketThreshold, bool forceRgb = false)
         {
             var bounds = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
             if (!bounds.Contains(rectangle))
@@ -24,27 +24,34 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             BitsPerPixel = Image.GetPixelFormatSize(bitmap.PixelFormat) / 8;
             Rectangle = rectangle;
 
-            BorderAnalysisResult result;
+            BorderAnalysis result;
 
-            switch (BitsPerPixel)
+            if (forceRgb)
             {
-                case 4: result = AnalyzeArgb(bitmap, rectangle, colorThreshold, bucketThreshold); break;
-                case 3: result = AnalyzeRgb(bitmap, rectangle, colorThreshold, bucketThreshold); break;
-                default: result = new BorderAnalysisResult(); break;
+                result = AnalyzeRgb(bitmap, rectangle, colorThreshold, bucketThreshold);
             }
+            else
+            {
+                switch (BitsPerPixel)
+                {
+                    case 4: result = AnalyzeArgb(bitmap, rectangle, colorThreshold, bucketThreshold); break;
+                    case 3: result = AnalyzeRgb(bitmap, rectangle, colorThreshold, bucketThreshold); break;
+                    default: result = new BorderAnalysis(); break;
+                }
+            }            
 
             Failed = !result.Success;
             BackgroundColor = result.Background;
             BucketRatio = result.BucketRatio;
         }
 
-        public BorderAnalyzer(BitmapData bitmap, int colorThreshold, float bucketThreshold) : 
-            this(bitmap, new Rectangle(0, 0, bitmap.Width, bitmap.Height), colorThreshold, bucketThreshold)
+        public BorderInspector(BitmapData bitmap, int colorThreshold, float bucketThreshold, bool forceRgb = false) : 
+            this(bitmap, new Rectangle(0, 0, bitmap.Width, bitmap.Height), colorThreshold, bucketThreshold, forceRgb)
         { 
         
         }
 
-        private unsafe BorderAnalysisResult AnalyzeRgb(BitmapData bitmap, Rectangle rectangle, int colorThreshold, float bucketThreshold)
+        private unsafe BorderAnalysis AnalyzeRgb(BitmapData bitmap, Rectangle rectangle, int colorThreshold, float bucketThreshold)
         {
             var h = bitmap.Height;
             var w = bitmap.Width;
@@ -66,18 +73,9 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     var r = row[p + 2];
 
                     var c = Color.FromArgb(r, g, b);
-                    var cb = c.ToColorBucket();
+                    var ce = colors.ContainsKey(c);
 
-                    if (buckets.ContainsKey(cb))
-                    {
-                        buckets[cb]++;
-                    }
-                    else
-                    {
-                        buckets.Add(cb, 1);
-                    }
-
-                    if (colors.ContainsKey(c))
+                    if (ce)
                     {
                         colors[c]++;
                     }
@@ -85,6 +83,19 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     {
                         colors.Add(c, 1);
                     }
+
+                    if (ce || colors.Count >= colorThreshold)
+                    {
+                        var cb = c.ToColorBucket();
+                        if (buckets.ContainsKey(cb))
+                        {
+                            buckets[cb]++;
+                        }
+                        else
+                        {
+                            buckets.Add(cb, 1);
+                        }
+                    }                    
                 }
 
                 for (var y = 0; y < h; y++)
@@ -97,24 +108,28 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     var r = row[p + 2];
 
                     var c = Color.FromArgb(r, g, b);
-                    var cb = c.ToColorBucket();
+                    var ce = colors.ContainsKey(c);
 
-                    if (buckets.ContainsKey(cb))
-                    {
-                        buckets[cb]++;
-                    }
-                    else
-                    {
-                        buckets.Add(cb, 1);
-                    }
-
-                    if (colors.ContainsKey(c))
+                    if (ce)
                     {
                         colors[c]++;
                     }
                     else if (colors.Count < colorThreshold)
                     {
                         colors.Add(c, 1);
+                    }
+
+                    if (ce || colors.Count >= colorThreshold)
+                    {
+                        var cb = c.ToColorBucket();
+                        if (buckets.ContainsKey(cb))
+                        {
+                            buckets[cb]++;
+                        }
+                        else
+                        {
+                            buckets.Add(cb, 1);
+                        }
                     }
                 }
 
@@ -128,24 +143,28 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     var r = row[p + 2];
 
                     var c = Color.FromArgb(r, g, b);
-                    var cb = c.ToColorBucket();
+                    var ce = colors.ContainsKey(c);
 
-                    if (buckets.ContainsKey(cb))
-                    {
-                        buckets[cb]++;
-                    }
-                    else
-                    {
-                        buckets.Add(cb, 1);
-                    }
-
-                    if (colors.ContainsKey(c))
+                    if (ce)
                     {
                         colors[c]++;
                     }
                     else if (colors.Count < colorThreshold)
                     {
                         colors.Add(c, 1);
+                    }
+
+                    if (ce || colors.Count >= colorThreshold)
+                    {
+                        var cb = c.ToColorBucket();
+                        if (buckets.ContainsKey(cb))
+                        {
+                            buckets[cb]++;
+                        }
+                        else
+                        {
+                            buckets.Add(cb, 1);
+                        }
                     }
                 }
 
@@ -159,32 +178,36 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     var r = row[p + 2];
 
                     var c = Color.FromArgb(r, g, b);
-                    var cb = c.ToColorBucket();
+                    var ce = colors.ContainsKey(c);
 
-                    if (buckets.ContainsKey(cb))
-                    {
-                        buckets[cb]++;
-                    }
-                    else
-                    {
-                        buckets.Add(cb, 1);
-                    }
-
-                    if (colors.ContainsKey(c))
+                    if (ce)
                     {
                         colors[c]++;
                     }
                     else if (colors.Count < colorThreshold)
                     {
                         colors.Add(c, 1);
+                    }
+
+                    if (ce || colors.Count >= colorThreshold)
+                    {
+                        var cb = c.ToColorBucket();
+                        if (buckets.ContainsKey(cb))
+                        {
+                            buckets[cb]++;
+                        }
+                        else
+                        {
+                            buckets.Add(cb, 1);
+                        }
                     }
                 }
             }
             
-            return new BorderAnalysisResult(colors, buckets, colorThreshold, bucketThreshold);
+            return new BorderAnalysis(colors, buckets, colorThreshold, bucketThreshold);
         }
 
-        private unsafe BorderAnalysisResult AnalyzeArgb(BitmapData bitmap, Rectangle rectangle, int colorThreshold, float bucketThreshold)
+        private unsafe BorderAnalysis AnalyzeArgb(BitmapData bitmap, Rectangle rectangle, int colorThreshold, float bucketThreshold)
         {
             var h = bitmap.Height;
             var w = bitmap.Width;
@@ -207,24 +230,28 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     var a = row[p + 3];
                     
                     var c = a == 0 ? Color.Transparent : Color.FromArgb(a, r, g, b);
-                    var cb = c.ToColorBucket();
+                    var ce = colors.ContainsKey(c);
 
-                    if (buckets.ContainsKey(cb))
-                    {
-                        buckets[cb]++;
-                    }
-                    else
-                    {
-                        buckets.Add(cb, 1);
-                    }
-
-                    if (colors.ContainsKey(c))
+                    if (ce)
                     {
                         colors[c]++;
                     }
                     else if (colors.Count < colorThreshold)
                     {
                         colors.Add(c, 1);
+                    }
+
+                    if (ce || colors.Count >= colorThreshold)
+                    {
+                        var cb = c.ToColorBucket();
+                        if (buckets.ContainsKey(cb))
+                        {
+                            buckets[cb]++;
+                        }
+                        else
+                        {
+                            buckets.Add(cb, 1);
+                        }
                     }
                 }
 
@@ -239,24 +266,28 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     var a = row[p + 3];
 
                     var c = a == 0 ? Color.Transparent : Color.FromArgb(a, r, g, b);
-                    var cb = c.ToColorBucket();
+                    var ce = colors.ContainsKey(c);
 
-                    if (buckets.ContainsKey(cb))
-                    {
-                        buckets[cb]++;
-                    }
-                    else
-                    {
-                        buckets.Add(cb, 1);
-                    }
-
-                    if (colors.ContainsKey(c))
+                    if (ce)
                     {
                         colors[c]++;
                     }
                     else if (colors.Count < colorThreshold)
                     {
                         colors.Add(c, 1);
+                    }
+
+                    if (ce || colors.Count >= colorThreshold)
+                    {
+                        var cb = c.ToColorBucket();
+                        if (buckets.ContainsKey(cb))
+                        {
+                            buckets[cb]++;
+                        }
+                        else
+                        {
+                            buckets.Add(cb, 1);
+                        }
                     }
                 }
 
@@ -271,24 +302,28 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     var a = row[p + 3];
 
                     var c = a == 0 ? Color.Transparent : Color.FromArgb(a, r, g, b);
-                    var cb = c.ToColorBucket();
+                    var ce = colors.ContainsKey(c);
 
-                    if (buckets.ContainsKey(cb))
-                    {
-                        buckets[cb]++;
-                    }
-                    else
-                    {
-                        buckets.Add(cb, 1);
-                    }
-
-                    if (colors.ContainsKey(c))
+                    if (ce)
                     {
                         colors[c]++;
                     }
                     else if (colors.Count < colorThreshold)
                     {
                         colors.Add(c, 1);
+                    }
+
+                    if (ce || colors.Count >= colorThreshold)
+                    {
+                        var cb = c.ToColorBucket();
+                        if (buckets.ContainsKey(cb))
+                        {
+                            buckets[cb]++;
+                        }
+                        else
+                        {
+                            buckets.Add(cb, 1);
+                        }
                     }
                 }
 
@@ -303,18 +338,9 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     var a = row[p + 3];
 
                     var c = a == 0 ? Color.Transparent : Color.FromArgb(a, r, g, b);
-                    var cb = c.ToColorBucket();
+                    var ce = colors.ContainsKey(c);
 
-                    if (buckets.ContainsKey(cb))
-                    {
-                        buckets[cb]++;
-                    }
-                    else
-                    {
-                        buckets.Add(cb, 1);
-                    }
-
-                    if (colors.ContainsKey(c))
+                    if (ce)
                     {
                         colors[c]++;
                     }
@@ -322,10 +348,23 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     {
                         colors.Add(c, 1);
                     }
+
+                    if (ce || colors.Count >= colorThreshold)
+                    {
+                        var cb = c.ToColorBucket();
+                        if (buckets.ContainsKey(cb))
+                        {
+                            buckets[cb]++;
+                        }
+                        else
+                        {
+                            buckets.Add(cb, 1);
+                        }
+                    }
                 }
             }
 
-            return new BorderAnalysisResult(colors, buckets, colorThreshold, bucketThreshold);
+            return new BorderAnalysis(colors, buckets, colorThreshold, bucketThreshold);
         }
     }
 }
