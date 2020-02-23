@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ImageResizer.Plugins.AutoCrop.Extensions;
+using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 
@@ -94,16 +95,61 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
                     }
                 }
             }
-                
-            source.UnlockBits(sourceData);
-            target.UnlockBits(targetData);
 
             if (bpp > 3)
             {
-                Raw.FillAlpha(target);
+                Raw.FillAlpha(targetData);
             }
 
+            source.UnlockBits(sourceData);
+            target.UnlockBits(targetData);
+
             return target;
+        }
+
+        public static unsafe void Buckets(Bitmap source)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+
+            var pixelFormat = source.PixelFormat;
+            var bpp = Image.GetPixelFormatSize(pixelFormat) / 8;
+            var data = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadWrite, pixelFormat);
+
+            var s0 = (byte*)data.Scan0;
+            var s = data.Stride;
+
+            var hasAlpha = bpp > 3;            
+
+            unchecked
+            {
+                for (var y = 0; y < source.Height; y++)
+                {
+                    var row = s0 + y * s;
+
+                    for (var x = 0; x < source.Width; x++)
+                    {
+                        var p = x * bpp;
+                        var b = row[p];
+                        var g = row[p + 1];
+                        var r = row[p + 2];
+                        var a = hasAlpha ? row[p + 3] : byte.MaxValue;
+
+                        var v = Color.FromArgb(a, r, g, b).ToColorBucket();
+                        var c = v.ToColorValue();
+
+                        row[p] = c;
+                        row[p + 1] = c;
+                        row[p + 2] = c;
+                    }
+                }
+            }
+
+            if (bpp > 3)
+            {
+                Raw.FillAlpha(data);
+            }
+
+            source.UnlockBits(data);
         }
 
         public static unsafe void Grayscale(Bitmap source)

@@ -9,32 +9,42 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
 {
     public class SobelAnalyzer : IAnalyzer
     {
+        private const int _thumbnailSize = 256;
+
+        private readonly bool _foundBoundingBox;
+        private readonly Rectangle _boundingBox;
         private readonly IAnalysis _analysis;
-        private const int _featureSize = 256;
 
-        public SobelAnalyzer(BitmapData bitmap, int threshold)
+        public SobelAnalyzer(BitmapData bitmap, int sobelThreshold, float bucketTreshold)
         {
-            var features = GetFeatureMap(bitmap);
+            var thumbnail = GetThumbnail(bitmap);
+            var thumbnailData = thumbnail.LockBits(new Rectangle(0, 0, thumbnail.Width, thumbnail.Height), ImageLockMode.ReadOnly, thumbnail.PixelFormat);
+            var thumbnailInspection = new BorderInspector(thumbnailData, _thumbnailSize, 1.0f);
+
+            thumbnail.UnlockBits(thumbnailData);
+
+            var features = GetFeatureMap(thumbnail);
             var featureData = features.LockBits(new Rectangle(0, 0, features.Width, features.Height), ImageLockMode.ReadOnly, features.PixelFormat);
-            var bounds = GetBoundingBoxForFeature(featureData, threshold, bitmap.Width, bitmap.Height);
-
+            var featureInspection = new BorderInspector(featureData, _thumbnailSize, bucketTreshold);
+            
+            if (featureInspection.Failed)
+            {
+                _boundingBox = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
+                _foundBoundingBox = false;
+            }
+            else
+            {
+                _boundingBox = GetBoundingBoxForFeature(featureData, sobelThreshold, bitmap.Width, bitmap.Height);
+                _foundBoundingBox = true;
+            }
+            
             features.UnlockBits(featureData);
-
-            var errorX = bitmap.Width / (float)_featureSize;
-            var errorY = bitmap.Height / (float)_featureSize;
-
-            var borderInspection = new BorderInspector(bitmap, bounds, threshold, 0.95f);
-
-            var success = bounds.X > errorX || 
-                          bounds.Y > errorY || 
-                          bounds.Width < bitmap.Width - errorX || 
-                          bounds.Height < bitmap.Height - errorY;
 
             _analysis = new ImageAnalysis
             {
-                BoundingBox = bounds,
-                Background = borderInspection.BackgroundColor,
-                Success = success
+                Success = _foundBoundingBox,
+                BoundingBox = _boundingBox,
+                Background = thumbnailInspection.BackgroundColor,
             };
         }        
 
@@ -43,14 +53,14 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             return _analysis;
         }
 
-        private Bitmap GetFeatureMap(BitmapData data)
+        private Bitmap GetThumbnail(BitmapData data)
         {
-            var w = Math.Min(data.Width, _featureSize);
-            var h = Math.Min(data.Height, _featureSize);
+            return Raw.Approximate(data, _thumbnailSize, _thumbnailSize);
+        }
 
-            var approximate = Raw.Approximate(data, w, h);
-
-            return Filter.Sobel(approximate);
+        private Bitmap GetFeatureMap(Bitmap thumbnail)
+        {
+            return Filter.Sobel(thumbnail);
         }
 
         private unsafe Rectangle GetBoundingBoxForFeature(BitmapData bitmap, int threshold, int width, int height)

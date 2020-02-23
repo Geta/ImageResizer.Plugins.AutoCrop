@@ -51,15 +51,25 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
 
+            var data = target.LockBits(new Rectangle(0, 0, target.Width, target.Height), ImageLockMode.WriteOnly, target.PixelFormat);
+            FillAlpha(data);
+
+            target.UnlockBits(data);
+        }
+
+        public static unsafe void FillAlpha(BitmapData target)
+        {
+            if (target == null) throw new ArgumentNullException(nameof(target));
+
             var bpp = Image.GetPixelFormatSize(target.PixelFormat) / 8;
-            if (bpp < 4) 
+            if (bpp < 4)
                 return;
 
             var w = target.Width;
             var h = target.Height;
-            var data = target.LockBits(new Rectangle(0, 0, w, h), ImageLockMode.WriteOnly, target.PixelFormat);
-            var s0 = (byte*)data.Scan0;
-            var s = data.Stride;
+            
+            var s0 = (byte*)target.Scan0;
+            var s = target.Stride;
 
             unchecked
             {
@@ -73,8 +83,6 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
                     }
                 }
             }
-
-            target.UnlockBits(data);
         }
 
         public static unsafe void FillRgb(Bitmap target, Color color)
@@ -156,11 +164,17 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
         {
             if (sourceData == null) throw new ArgumentNullException(nameof(sourceData));
 
-            var pixelFormat = sourceData.PixelFormat;
-            var bpp = Image.GetPixelFormatSize(pixelFormat) / 8;
-            var target = new Bitmap(width, height, sourceData.PixelFormat);
+            if (width > sourceData.Width)
+                width = sourceData.Width;
 
+            if (height > sourceData.Height)
+                height = sourceData.Height;
+
+            var pixelFormat = sourceData.PixelFormat;
+            var target = new Bitmap(width, height, pixelFormat);
             var targetData = target.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, pixelFormat);
+
+            var bpp = Image.GetPixelFormatSize(pixelFormat) / 8;
 
             var ss0 = (byte*)sourceData.Scan0;
             var ts0 = (byte*)targetData.Scan0;

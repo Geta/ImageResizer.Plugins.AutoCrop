@@ -239,8 +239,13 @@ namespace ImageResizer.Plugins.AutoCrop
             {
                 if (state.preRenderBitmap == null)
                     state.preRenderBitmap = new Bitmap(state.sourceBitmap);
-                
-                state.preRenderBitmap = Filter.Sobel(state.preRenderBitmap);
+
+                // Display graphics as analyzer sees it.
+                Filter.Buckets(state.preRenderBitmap);
+
+                // Also set the background color, just for nice
+                var backgroundColor = state.settings.BackgroundColor;
+                state.settings.BackgroundColor = backgroundColor.ToColorBucket().ToColor();
 
                 using (var graphics = Graphics.FromImage(state.preRenderBitmap))
                 {
@@ -275,7 +280,8 @@ namespace ImageResizer.Plugins.AutoCrop
 
         protected virtual IAnalyzer GetAnalyzer(BitmapData data, AutoCropSettings settings)
         {
-            return new BoundsAnalyzer(data, settings.Threshold, 0.945f);
+            return new SobelAnalyzer(data, settings.Threshold, 0.945f);
+            //return new BoundsAnalyzer(data, settings.Threshold, 0.945f);
         }
 
         protected int GetPadding(int percentage, int dimension)
