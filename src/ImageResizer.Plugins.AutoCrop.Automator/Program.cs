@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using ImageResizer.Configuration;
+using ImageResizer.Plugins.AutoCrop.Models;
 using ImageResizer.Plugins.FastScaling;
 using ImageResizer.Plugins.MozJpeg;
 using System;
@@ -43,6 +44,9 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
         [Option('c', "cropMode", Required = false, Default = FitMode.Pad, HelpText = "Fit mode if crop is success (Max, Pad, Crop, Carve or Stretch).")]
         public FitMode CropMode { get; set; }
 
+        [Option('e', "cropMethod", Required = false, Default = AutoCropMethod.Tolerance, HelpText = "Auto crop method to use (Tolerance or Edge).")]
+        public AutoCropMethod CropMethod { get; set; }
+
         [Option('q', "quality", Required = false, Default = 90, HelpText = "Output quality (0-100).")]
         public int Quality { get; set; }
 
@@ -67,7 +71,7 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
 
         static readonly string[] _extensions = new[] 
         { 
-            ".jpg", ".jpeg", //".png" 
+            ".jpg", ".jpeg", ".png"
         };
 
         static void Main(string[] args)
@@ -139,6 +143,7 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
             {
                 { "autocrop", $"{options.PadX};{options.PadY};{options.Tolerance}" },
                 { "autoCropMode", options.CropMode.ToString() },
+                { "autoCropMethod", options.CropMethod.ToString() },
                 { "quality", options.Quality.ToString() },
                 { "fastscale", "true" },
                 { "down.filter", "CubicSharp" },

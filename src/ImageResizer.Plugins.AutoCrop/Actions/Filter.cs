@@ -23,6 +23,8 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
             var t0 = (byte*)targetData.Scan0;
             var s = sourceData.Stride;
 
+            var hasAlpha = bpp > 3;
+
             unchecked
             {
                 for (var y = 0; y < source.Height; y++)
@@ -47,58 +49,71 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
 
                         var xbn = xn * bpp;
                         var xb = x * bpp;
-                        var xbm = x * bpp;
+                        var xbm = xm * bpp;
 
-                        for (var p = 0; p < 3; p++)
+                        // All color information is baked as grayscale, luminance is enough to find edges.
+                        var c11 = (byte)(0.299 * rn[xbn + 2] + 0.587 * rn[xbn + 1] + 0.114 * rn[xbn]);
+                        var c12 = (byte)(0.299 * rn[xb + 2] + 0.587 * rn[xb + 1] + 0.114 * rn[xb]);
+                        var c13 = (byte)(0.299 * rn[xbm + 2] + 0.587 * rn[xbm + 1] + 0.114 * rn[xbm]);
+
+                        var c21 = (byte)(0.299 * r[xbn + 2] + 0.587 * r[xbn + 1] + 0.114 * r[xbn]);
+                        //var c22 = (byte)(0.299 * r[xb + 2] + 0.587 * r[xb + 1] + 0.114 * r[xb]);
+                        var c23 = (byte)(0.299 * rn[xbm + 2] + 0.587 * rn[xbm + 1] + 0.114 * rn[xbm]);
+
+                        var c31 = (byte)(0.299 * rm[xbn + 2] + 0.587 * rm[xbn + 1] + 0.114 * rm[xbn]);
+                        var c32 = (byte)(0.299 * rm[xb + 2] + 0.587 * rm[xb + 1] + 0.114 * rm[xb]);
+                        var c33 = (byte)(0.299 * rm[xb + 2] + 0.587 * rm[xb + 1] + 0.114 * rm[xb]);
+
+                        // Since many images define entirely transparent color as black,
+                        // There might be a rather harsh shift between totally transparent and slightly visible colors.
+                        // To avoid this invisible edge, all alpha information should be added as white shift of existing colors.
+                        if (hasAlpha)
                         {
-                            var c11 = rn[xbn + p];
-                            var c12 = rn[xb + p];
-                            var c13 = rn[xbm + p];
+                            c11 = (byte)Math.Min(byte.MaxValue, c11 * (rn[xbn + 3] * Constants.BytePrecision) + (byte.MaxValue - rn[xbn + 3]));
+                            c12 = (byte)Math.Min(byte.MaxValue, c12 * (rn[xb + 3] * Constants.BytePrecision) + (byte.MaxValue - rn[xb + 3]));
+                            c13 = (byte)Math.Min(byte.MaxValue, c13 * (rn[xbm + 3] * Constants.BytePrecision) + (byte.MaxValue - rn[xbm + 3])); 
 
-                            var c21 = r[xbn + p];
-                            //var c22 = r[xb + p];
-                            var c23 = r[xbm + p];
+                            c21 = (byte)Math.Min(byte.MaxValue, c21 * (r[xbn + 3] * Constants.BytePrecision) + (byte.MaxValue - r[xbn + 3]));
+                            //c22 = (byte)Math.Min(byte.MaxValue, c22 * (r[xb + 3] * Constants.BytePrecision) + (byte.MaxValue - r[xb + 3]));
+                            c23 = (byte)Math.Min(byte.MaxValue, c23 * (r[xbm + 3] * Constants.BytePrecision) + (byte.MaxValue - r[xbm + 3])); 
 
-                            var c31 = rm[xbn + p];
-                            var c32 = rm[xb + p];
-                            var c33 = rm[xbm + p];
+                            c31 = (byte)Math.Min(byte.MaxValue, c31 * (rm[xbn + 3] * Constants.BytePrecision) + (byte.MaxValue - rm[xbn + 3]));
+                            c32 = (byte)Math.Min(byte.MaxValue, c32 * (rm[xb + 3] * Constants.BytePrecision) + (byte.MaxValue - rm[xb + 3])); 
+                            c33 = (byte)Math.Min(byte.MaxValue, c33 * (rm[xbm + 3] * Constants.BytePrecision) + (byte.MaxValue - rm[xbm + 3])); 
+                        }
 
-                            /* Unoptimized calculation
-                            var dx = c11 * -1 + c12 * 0 + c13 * 1
-                                   + c21 * -2 + c22 * 0 + c23 * 2
-                                   + c31 * -1 + c32 * 0 + c33 * 1;
+                        // This is just two optimized sobel kernels (all 0 multiplications removed).
+                        var dx = c11 * -1 + c13 + c21 * -2 + c23 * 2 + c31 * -1 + c33;
+                        var dy = c11 + c12 * 2 + c13 + c31 * -1 + c32 * -2 + c33 * -1;
 
-                            var dy = c11 * 1 + c12 * 2 + c13 * 1
-                                   + c21 * 0 + c22 * 0 + c23 * 0
-                                   + c31 * -1 + c32 * -2 + c33 * -1;
-                            */
+                        var mag = Math.Sqrt((dx * dx) + (dy * dy));
+                        if (mag > byte.MaxValue)
+                        {
+                            tr[xb] = byte.MaxValue;
+                            tr[xb + 1] = byte.MaxValue;
+                            tr[xb + 2] = byte.MaxValue;
+                        }
+                        else if (mag < 0)
+                        {
+                            tr[xb] = 0;
+                            tr[xb + 1] = 0;
+                            tr[xb + 2] = 0;
+                        }
+                        else
+                        {
+                            var c = (byte)mag;
 
-                            /* Optimized number of calculations */
-                            var dx = c11 * -1 + c13 + c21 * -2 + c23 * 2 + c31 * -1 + c33;
-                            var dy = c11 + c12 * 2 + c13 + c31 * -1 + c32 * -2 + c33 * -1;
+                            tr[xb] = c;
+                            tr[xb + 1] = c;
+                            tr[xb + 2] = c;
+                        }
 
-                            var mag = Math.Sqrt((dx * dx) + (dy * dy));
-                        
-                            if (mag > byte.MaxValue)
-                            {
-                                tr[xb + p] = byte.MaxValue;
-                            }
-                            else if (mag < 0)
-                            {
-                                tr[xb + p] = 0;
-                            }
-                            else
-                            {
-                                tr[xb + p] = (byte)mag;
-                            }
+                        if (hasAlpha)
+                        {
+                            tr[xb + 3] = byte.MaxValue;
                         }
                     }
                 }
-            }
-
-            if (bpp > 3)
-            {
-                Raw.FillAlpha(targetData);
             }
 
             source.UnlockBits(sourceData);
@@ -118,7 +133,7 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
             var s0 = (byte*)data.Scan0;
             var s = data.Stride;
 
-            var hasAlpha = bpp > 3;            
+            var hasAlpha = bpp > 3;
 
             unchecked
             {

@@ -9,5 +9,6 @@
         public bool Debug;
         public bool SetMode;
         public FitMode Mode;
+        public AutoCropMethod Method;
     }
 }

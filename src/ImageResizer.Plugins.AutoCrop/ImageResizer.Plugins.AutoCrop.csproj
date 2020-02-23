@@ -62,6 +62,7 @@
     <Compile Include="Extensions\PointExtensions.cs" />
     <Compile Include="Extensions\RectangleExtensions.cs" />
     <Compile Include="Extensions\SizeExtensions.cs" />
+    <Compile Include="Models\AutoCropMethod.cs" />
     <Compile Include="Models\ImageAnalysis.cs" />
     <Compile Include="Models\AutoCropSettings.cs" />
     <Compile Include="Models\BorderAnalysis.cs" />
