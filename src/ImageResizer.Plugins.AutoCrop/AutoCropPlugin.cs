@@ -75,7 +75,7 @@ namespace ImageResizer.Plugins.AutoCrop
                     state.Data[DataKey] = new AutoCropState(analysis, bitmap);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // ignore
             }
@@ -184,7 +184,7 @@ namespace ImageResizer.Plugins.AutoCrop
                 SetMode(state, data, settings);
                 SetBackground(state, data, settings);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // ignore
             }
@@ -271,7 +271,7 @@ namespace ImageResizer.Plugins.AutoCrop
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // ignore
             }
