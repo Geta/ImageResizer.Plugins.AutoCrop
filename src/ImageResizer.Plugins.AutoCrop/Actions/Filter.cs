@@ -13,6 +13,17 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
 
             var pixelFormat = source.PixelFormat;
             var bpp = (byte)Image.GetPixelFormatSize(pixelFormat) / 8;
+            var hasAlpha = bpp > 3;
+
+            if (hasAlpha)
+            {
+                source = GrayscaleRgba(source);
+            }
+            else
+            {
+                source = GrayscaleRgb(source);
+            }
+
             var target = new Bitmap(source.Width, source.Height, source.PixelFormat);
             var imageBox = new Rectangle(0, 0, source.Width, source.Height);
 
@@ -22,8 +33,6 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
             var s0 = (byte*)sourceData.Scan0;
             var t0 = (byte*)targetData.Scan0;
             var s = sourceData.Stride;
-
-            var hasAlpha = bpp > 3;
 
             unchecked
             {
@@ -51,40 +60,8 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
                         var xb = x * bpp;
                         var xbm = xm * bpp;
 
-                        // All color information is baked as grayscale, luminance is enough to find edges.
-                        var c11 = (byte)(0.299 * rn[xbn + 2] + 0.587 * rn[xbn + 1] + 0.114 * rn[xbn]);
-                        var c12 = (byte)(0.299 * rn[xb + 2] + 0.587 * rn[xb + 1] + 0.114 * rn[xb]);
-                        var c13 = (byte)(0.299 * rn[xbm + 2] + 0.587 * rn[xbm + 1] + 0.114 * rn[xbm]);
-
-                        var c21 = (byte)(0.299 * r[xbn + 2] + 0.587 * r[xbn + 1] + 0.114 * r[xbn]);
-                        //var c22 = (byte)(0.299 * r[xb + 2] + 0.587 * r[xb + 1] + 0.114 * r[xb]);
-                        var c23 = (byte)(0.299 * rn[xbm + 2] + 0.587 * rn[xbm + 1] + 0.114 * rn[xbm]);
-
-                        var c31 = (byte)(0.299 * rm[xbn + 2] + 0.587 * rm[xbn + 1] + 0.114 * rm[xbn]);
-                        var c32 = (byte)(0.299 * rm[xb + 2] + 0.587 * rm[xb + 1] + 0.114 * rm[xb]);
-                        var c33 = (byte)(0.299 * rm[xb + 2] + 0.587 * rm[xb + 1] + 0.114 * rm[xb]);
-
-                        // Since many images define entirely transparent color as black,
-                        // There might be a rather harsh shift between totally transparent and slightly visible colors.
-                        // To avoid this invisible edge, all alpha information should be added as white shift of existing colors.
-                        if (hasAlpha)
-                        {
-                            c11 = (byte)Math.Min(byte.MaxValue, c11 * (rn[xbn + 3] * Constants.BytePrecision) + (byte.MaxValue - rn[xbn + 3]));
-                            c12 = (byte)Math.Min(byte.MaxValue, c12 * (rn[xb + 3] * Constants.BytePrecision) + (byte.MaxValue - rn[xb + 3]));
-                            c13 = (byte)Math.Min(byte.MaxValue, c13 * (rn[xbm + 3] * Constants.BytePrecision) + (byte.MaxValue - rn[xbm + 3])); 
-
-                            c21 = (byte)Math.Min(byte.MaxValue, c21 * (r[xbn + 3] * Constants.BytePrecision) + (byte.MaxValue - r[xbn + 3]));
-                            //c22 = (byte)Math.Min(byte.MaxValue, c22 * (r[xb + 3] * Constants.BytePrecision) + (byte.MaxValue - r[xb + 3]));
-                            c23 = (byte)Math.Min(byte.MaxValue, c23 * (r[xbm + 3] * Constants.BytePrecision) + (byte.MaxValue - r[xbm + 3])); 
-
-                            c31 = (byte)Math.Min(byte.MaxValue, c31 * (rm[xbn + 3] * Constants.BytePrecision) + (byte.MaxValue - rm[xbn + 3]));
-                            c32 = (byte)Math.Min(byte.MaxValue, c32 * (rm[xb + 3] * Constants.BytePrecision) + (byte.MaxValue - rm[xb + 3])); 
-                            c33 = (byte)Math.Min(byte.MaxValue, c33 * (rm[xbm + 3] * Constants.BytePrecision) + (byte.MaxValue - rm[xbm + 3])); 
-                        }
-
-                        // This is just two optimized sobel kernels (all 0 multiplications removed).
-                        var dx = c11 * -1 + c13 + c21 * -2 + c23 * 2 + c31 * -1 + c33;
-                        var dy = c11 + c12 * 2 + c13 + c31 * -1 + c32 * -2 + c33 * -1;
+                        var dx = rn[xbn] * -1 + rn[xbm] + r[xbn] * -2 + r[xbm] * 2 + rm[xbn] * -1 + rm[xbm];
+                        var dy = rn[xbn] + rn[xb] * 2 + rn[xbm] + rm[xbn] * -1 + rm[xb] * -2 + rm[xbm] * -1;
 
                         var mag = Math.Sqrt((dx * dx) + (dy * dy));
                         if (mag > byte.MaxValue)
@@ -116,85 +93,157 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
                 }
             }
 
+            if (bpp > 3)
+            {
+                Raw.FillAlpha(targetData);
+            }
+
             source.UnlockBits(sourceData);
             target.UnlockBits(targetData);
 
             return target;
         }
 
-        public static unsafe void Buckets(Bitmap source)
+        public static unsafe Bitmap Buckets(Bitmap source)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
 
             var pixelFormat = source.PixelFormat;
-            var bpp = Image.GetPixelFormatSize(pixelFormat) / 8;
-            var data = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadWrite, pixelFormat);
-
-            var s0 = (byte*)data.Scan0;
-            var s = data.Stride;
-
+            var bpp = (byte)Image.GetPixelFormatSize(pixelFormat) / 8;
             var hasAlpha = bpp > 3;
+
+            var target = new Bitmap(source.Width, source.Height, source.PixelFormat);
+            var imageBox = new Rectangle(0, 0, source.Width, source.Height);
+
+            var sourceData = source.LockBits(imageBox, ImageLockMode.ReadOnly, pixelFormat);
+            var targetData = target.LockBits(imageBox, ImageLockMode.WriteOnly, pixelFormat);
+
+            var s0 = (byte*)sourceData.Scan0;
+            var t0 = (byte*)targetData.Scan0;
+            var s = sourceData.Stride;
 
             unchecked
             {
                 for (var y = 0; y < source.Height; y++)
                 {
-                    var row = s0 + y * s;
+                    var srow = s0 + y * s;
+                    var trow = t0 + y * s;
 
                     for (var x = 0; x < source.Width; x++)
                     {
                         var p = x * bpp;
-                        var b = row[p];
-                        var g = row[p + 1];
-                        var r = row[p + 2];
-                        var a = hasAlpha ? row[p + 3] : byte.MaxValue;
+                        var b = srow[p];
+                        var g = srow[p + 1];
+                        var r = srow[p + 2];
+                        var a = hasAlpha ? srow[p + 3] : byte.MaxValue;
 
                         var v = Color.FromArgb(a, r, g, b).ToColorBucket();
                         var c = v.ToColorValue();
 
-                        row[p] = c;
-                        row[p + 1] = c;
-                        row[p + 2] = c;
+                        trow[p] = c;
+                        trow[p + 1] = c;
+                        trow[p + 2] = c;
                     }
                 }
             }
 
             if (bpp > 3)
             {
-                Raw.FillAlpha(data);
+                Raw.FillAlpha(targetData);
             }
 
-            source.UnlockBits(data);
+            source.UnlockBits(sourceData);
+            target.UnlockBits(targetData);
+
+            return target;
         }
 
-        public static unsafe void Grayscale(Bitmap source)
+        public static unsafe Bitmap GrayscaleRgb(Bitmap source)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
 
             var pixelFormat = source.PixelFormat;
-            var bpp = Image.GetPixelFormatSize(pixelFormat) / 8; 
-            var data = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, pixelFormat);
+            var bpp = (byte)Image.GetPixelFormatSize(pixelFormat) / 8;
+            var hasAlpha = bpp > 3;
 
-            var s0 = (byte*)data.Scan0;
-            var s = data.Stride;
+            var target = new Bitmap(source.Width, source.Height, source.PixelFormat);
+            var imageBox = new Rectangle(0, 0, source.Width, source.Height);
+
+            var sourceData = source.LockBits(imageBox, ImageLockMode.ReadOnly, pixelFormat);
+            var targetData = target.LockBits(imageBox, ImageLockMode.WriteOnly, pixelFormat);
+
+            var s0 = (byte*)sourceData.Scan0;
+            var t0 = (byte*)targetData.Scan0;
+            var s = sourceData.Stride;
 
             unchecked
             {
                 for (var y = 0; y < source.Height; y++)
                 {
-                    var row = s0 + y * s;
+                    var srow = s0 + y * s;
+                    var trow = t0 + y * s;
 
-                    for (var x = 0; x < source.Height; x++)
+                    for (var x = 0; x < source.Width; x++)
                     {
                         var p = x * bpp;
-                        var v = (byte)(0.299 * row[p + 2] + 0.587 * row[p + 1] + 0.114 * row[p]);
+                        var v = (byte)(0.299 * srow[p + 2] + 0.587 * srow[p + 1] + 0.114 * srow[p]);
 
-                        row[p] = row[p + 1] = row[p + 2] = v;
+                        trow[p] = v;
+                        trow[p + 1] = v;
+                        trow[p + 2] = v;
                     }
                 }
             }
 
-            source.UnlockBits(data);
+            source.UnlockBits(sourceData);
+            target.UnlockBits(targetData);
+
+            return target;
+        }
+
+        public static unsafe Bitmap GrayscaleRgba(Bitmap source)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+
+            var pixelFormat = source.PixelFormat;
+            var bpp = (byte)Image.GetPixelFormatSize(pixelFormat) / 8;
+            var hasAlpha = bpp > 3;
+
+            var target = new Bitmap(source.Width, source.Height, source.PixelFormat);
+            var imageBox = new Rectangle(0, 0, source.Width, source.Height);
+
+            var sourceData = source.LockBits(imageBox, ImageLockMode.ReadOnly, pixelFormat);
+            var targetData = target.LockBits(imageBox, ImageLockMode.WriteOnly, pixelFormat);
+
+            var s0 = (byte*)sourceData.Scan0;
+            var t0 = (byte*)targetData.Scan0;
+            var s = sourceData.Stride;
+
+            unchecked
+            {
+                for (var y = 0; y < source.Height; y++)
+                {
+                    var srow = s0 + y * s;
+                    var trow = t0 + y * s;
+
+                    for (var x = 0; x < source.Width; x++)
+                    {
+                        var p = x * bpp;
+                        var v = (byte)(0.299 * srow[p + 2] + 0.587 * srow[p + 1] + 0.114 * srow[p]);
+                        var c = (byte)Math.Min(byte.MaxValue, v * (srow[p + 3] * Constants.BytePrecision) + (byte.MaxValue - srow[p + 3]));
+
+                        trow[p] = c;
+                        trow[p + 1] = c;
+                        trow[p + 2] = c;
+                        trow[p + 3] = byte.MaxValue;
+                    }
+                }
+            }
+
+            source.UnlockBits(sourceData);
+            target.UnlockBits(targetData);
+
+            return target;
         }
     }
 }

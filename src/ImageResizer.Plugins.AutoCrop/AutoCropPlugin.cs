@@ -241,7 +241,7 @@ namespace ImageResizer.Plugins.AutoCrop
                 }
                 else
                 {
-                    Filter.Buckets(state.preRenderBitmap);
+                    state.preRenderBitmap = Filter.Buckets(state.preRenderBitmap);
                 }                
 
                 // Establish a drawing canvas
