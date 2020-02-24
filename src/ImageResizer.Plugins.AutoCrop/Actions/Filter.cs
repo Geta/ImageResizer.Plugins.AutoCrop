@@ -84,11 +84,6 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
                             tr[xb + 1] = c;
                             tr[xb + 2] = c;
                         }
-
-                        if (hasAlpha)
-                        {
-                            tr[xb + 3] = byte.MaxValue;
-                        }
                     }
                 }
             }
