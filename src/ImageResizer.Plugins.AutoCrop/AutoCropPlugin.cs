@@ -40,6 +40,9 @@ namespace ImageResizer.Plugins.AutoCrop
         public readonly string DataKey = "autocrop";
         public readonly string SettingsKey = "autocropsettings";
 
+        // PrepareSourceBitmap selects page/frame and flips the source bitmap if needed
+        // This step occurs after PrepareSourceBitmap has been called
+        // More here: https://imageresizing.net/docs/v4/extend/imagebuilder
         protected override RequestedAction PostPrepareSourceBitmap(ImageState state)
         {
             if (!QualifyState(state))
@@ -73,11 +76,6 @@ namespace ImageResizer.Plugins.AutoCrop
                     state.Data[DataKey] = new AutoCropState(analysis, bitmap);
                 }
             }
-            catch (Exception)
-            {
-                // Felt cute, might implement logging later
-                // Without the DataKey, later processing steps will not occur
-            }
             finally
             {
                 // Unlock memory access
@@ -87,7 +85,7 @@ namespace ImageResizer.Plugins.AutoCrop
 
             return RequestedAction.None;
         }
-        
+       
         protected override RequestedAction LayoutImage(ImageState state)
         {
             if (state == null || !state.Data.ContainsKey(DataKey) || !state.Data.ContainsKey(SettingsKey))
@@ -190,10 +188,17 @@ namespace ImageResizer.Plugins.AutoCrop
                 // In this case another image should be rendered
                 // This can be done by using the preRenderBitmap in the image state
                 // If there isn't one already, or if it is of differing size, override it
-                if (state.preRenderBitmap == null || state.preRenderBitmap.Size != size)
+                if (state.preRenderBitmap != null && state.preRenderBitmap.Size != size)
+                {
+                    state.preRenderBitmap.Dispose();
+                    state.preRenderBitmap = null;
+                }
+
+                if (state.preRenderBitmap == null)
                     state.preRenderBitmap = new Bitmap(size.Width, size.Height, state.sourceBitmap.PixelFormat);
 
-                // Custom fill routine
+                // Since all bitmaps are created with 0 values after allocation
+                // The proper background color needs to be pre-filled
                 if (data.BytesPerPixel == 3)
                 {
                     Raw.FillRgb(state.preRenderBitmap, data.BorderColor);
@@ -203,8 +208,11 @@ namespace ImageResizer.Plugins.AutoCrop
                     Raw.FillRgba(state.preRenderBitmap, data.BorderColor);
                 }
 
+                // Copy pixels from original
                 Raw.Copy(state.sourceBitmap, instructions.Target, state.preRenderBitmap, instructions.Translate);
 
+                // Set the ImageResizer copyRect
+                // This will crop the image in the render step
                 state.copyRect = new RectangleF(0, 0, size.Width, size.Height);
             }
             else
@@ -217,21 +225,20 @@ namespace ImageResizer.Plugins.AutoCrop
 
             try
             {
-                if (state.preRenderBitmap == null)
-                    state.preRenderBitmap = new Bitmap(state.sourceBitmap);
+                var preRenderBitmap = state.preRenderBitmap ?? new Bitmap(state.sourceBitmap);
 
                 if (settings.Method == AutoCropMethod.Edge)
                 {
                     // Display graphics as analyzer sees it.
-                    state.preRenderBitmap = Filter.Sobel(state.preRenderBitmap);   
+                    preRenderBitmap = Filter.Sobel(preRenderBitmap);   
                 }
                 else
                 {
-                    state.preRenderBitmap = Filter.Buckets(state.preRenderBitmap);
-                }                
+                    preRenderBitmap = Filter.Buckets(preRenderBitmap);
+                }
 
                 // Establish a drawing canvas
-                using (var graphics = Graphics.FromImage(state.preRenderBitmap))
+                using (var graphics = Graphics.FromImage(preRenderBitmap))
                 {
                     graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
@@ -256,6 +263,11 @@ namespace ImageResizer.Plugins.AutoCrop
                         graphics.DrawRectangle(pen, rectangle);
                     }
                 }
+
+                if (state.preRenderBitmap != null)
+                    state.preRenderBitmap.Dispose();
+
+                state.preRenderBitmap = preRenderBitmap;
             }
             catch (Exception)
             {

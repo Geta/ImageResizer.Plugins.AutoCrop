@@ -91,9 +91,7 @@ namespace ImageResizer.Plugins.AutoCrop.Extensions
         {
             return new Rectangle(rectangle.X + point.X, rectangle.Y + point.Y, rectangle.Width, rectangle.Height);
         }
-
         
-
         public static Rectangle Expand(this Rectangle rectangle, int paddingX, int paddingY)
         {
             if (paddingX == 0 && paddingY == 0) return rectangle;

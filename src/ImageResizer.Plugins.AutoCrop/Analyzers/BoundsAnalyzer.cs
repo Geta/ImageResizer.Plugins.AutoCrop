@@ -84,7 +84,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             var w = rectangle.Right;
             var h = rectangle.Bottom;
 
-            // Stride, scan width + extra data.
+            // Stride, scan width.
             var s = bitmap.Stride;
 
             // Scan0, pointer to first scan.
@@ -105,7 +105,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             for (var y = rectangle.Y; y < h; y++)
             {
                 // Pointer to current scanline
-                var line = s0 + y * s;
+                var row = s0 + y * s;
 
                 for (var x = rectangle.X; x < w; x++)
                 {
@@ -114,9 +114,9 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
 
                     // Pixels are stored in b,g,r-order
                     // In this case one byte per color
-                    var b = line[p];
-                    var g = line[p + 1];
-                    var r = line[p + 2];
+                    var b = row[p];
+                    var g = row[p + 1];
+                    var r = row[p + 2];
 
                     // Delta color values
                     var bd = Math.Abs(b - backgroundColor.B);

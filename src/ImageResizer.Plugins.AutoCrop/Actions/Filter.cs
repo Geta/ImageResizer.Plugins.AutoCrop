@@ -9,7 +9,8 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
     {
         public static unsafe Bitmap Sobel(Bitmap source)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (source == null) 
+                throw new ArgumentNullException(nameof(source));
 
             var pixelFormat = source.PixelFormat;
             var bpp = (byte)Image.GetPixelFormatSize(pixelFormat) / 8;
@@ -103,6 +104,7 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
             finally
             {
                 source.UnlockBits(sourceData);
+                source.Dispose();
             }
 
             return target;
@@ -171,7 +173,7 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
             return target;
         }
 
-        public static unsafe Bitmap GrayscaleRgb(Bitmap source, bool disposeOriginal = true)
+        public static unsafe Bitmap GrayscaleRgb(Bitmap source, bool disposeOriginal = false)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
 
@@ -221,7 +223,7 @@ namespace ImageResizer.Plugins.AutoCrop.Actions
             return target;
         }
 
-        public static unsafe Bitmap GrayscaleRgba(Bitmap source, bool disposeOriginal = true)
+        public static unsafe Bitmap GrayscaleRgba(Bitmap source, bool disposeOriginal = false)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
 

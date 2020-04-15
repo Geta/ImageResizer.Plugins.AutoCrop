@@ -53,6 +53,9 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             
             features.UnlockBits(featureData);
 
+            features.Dispose();
+            thumbnail.Dispose();
+
             _analysis = new ImageAnalysis
             {
                 Success = _foundBoundingBox,
