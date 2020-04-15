@@ -34,7 +34,7 @@ namespace ImageResizer.Plugins.AutoCrop.Extensions
             }
         }
 
-        public static Rectangle Aspect(this Rectangle rectangle, float aspect)
+        public static Rectangle ForceAspect(this Rectangle rectangle, float aspect)
         {
             if (rectangle.Equals(Rectangle.Empty)) return rectangle;
             if (aspect == 0) return rectangle;

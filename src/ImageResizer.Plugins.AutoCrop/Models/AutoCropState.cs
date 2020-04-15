@@ -9,7 +9,7 @@ namespace ImageResizer.Plugins.AutoCrop.Models
         public readonly Rectangle OriginalDimensions;
         public Rectangle TargetDimensions;
         public Size Padding;
-        public int BitsPerPixel;
+        public int BytesPerPixel;
 
         public bool ShouldPreRender;
         public RenderInstructions Instructions;        
@@ -17,7 +17,7 @@ namespace ImageResizer.Plugins.AutoCrop.Models
         public AutoCropState(IAnalysis analysis, Bitmap bitmap)
         {
             Bounds = analysis.BoundingBox;
-            BitsPerPixel = Image.GetPixelFormatSize(bitmap.PixelFormat) / 8;
+            BytesPerPixel = Image.GetPixelFormatSize(bitmap.PixelFormat) / 8;
             BorderColor = analysis.Background;
             OriginalDimensions = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
         }
