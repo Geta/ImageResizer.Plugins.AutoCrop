@@ -1,6 +1,7 @@
 ﻿using CommandLine;
 using ImageResizer.Configuration;
 using ImageResizer.Plugins.AutoCrop.Models;
+using ImageResizer.Plugins.AutoMatte;
 using ImageResizer.Plugins.FastScaling;
 using ImageResizer.Plugins.MozJpeg;
 using System;
@@ -65,6 +66,7 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
         static readonly IPlugin[] _plugins = new IPlugin[]
         {
             new AutoCropPlugin(),
+            new AutoMattePlugin(),
             new FastScalingPlugin(),
             new MozJpegPlugin(),
         };
@@ -104,7 +106,8 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
                 {
                     var source = path.Substring(options.Input.Length);
                     var fileName = Path.GetFileName(source);
-                    var destination = Path.Combine(options.Output, fileName);
+                    var fileNameWithoutExt = Path.GetFileNameWithoutExtension(source);
+                    var destination = Path.Combine(options.Output, fileNameWithoutExt + ".png");
                     var job = new ImageJob(path, destination, instructions);
 
                     try
@@ -141,10 +144,11 @@ namespace ImageResizer.Plugins.AutoCrop.Automator
         {
             var collection = new NameValueCollection
             {
-                { "autocrop", $"{options.PadX};{options.PadY};{options.Tolerance}" },
-                { "autoCropMode", options.CropMode.ToString() },
-                { "autoCropMethod", options.CropMethod.ToString() },
+                //{ "autocrop", $"{options.PadX};{options.PadY};{options.Tolerance}" },
+                //{ "autoCropMode", options.CropMode.ToString() },
+                //{ "autoCropMethod", options.CropMethod.ToString() },
                 { "quality", options.Quality.ToString() },
+                { "format", "png" },
                 { "fastscale", "true" },
                 { "down.filter", "CubicSharp" },
                 { "down.speed", "-2" },

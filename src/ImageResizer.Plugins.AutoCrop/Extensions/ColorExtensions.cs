@@ -21,7 +21,7 @@ namespace ImageResizer.Plugins.AutoCrop.Extensions
         {
             unchecked
             {
-                return (byte)Math.Min(byte.MaxValue, bucket * _bucketRatio);
+                return (byte)Math.Min(byte.MaxValue, Math.Ceiling(bucket * _bucketRatio));
             }
         }
         
