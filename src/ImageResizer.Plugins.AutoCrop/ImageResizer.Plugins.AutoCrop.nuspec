@@ -10,6 +10,7 @@
         <description>Low tolerance auto cropping of images with whitespace</description>
         <projectUrl>https://github.com/geta/imageresizer.plugins.autocrop</projectUrl>
         <copyright>Copyright © Geta 2019</copyright>
+        <repository type="git" url="URL" branch="BRANCH_NAME" commit="COMMIT" />
         <dependencies>
             <group targetFramework=".NETFramework4.5">
                 <dependency id="ImageResizer" version="4.0.5" />
