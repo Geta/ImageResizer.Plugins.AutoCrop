@@ -1,5 +1,8 @@
 # ImageResizer.Plugins.AutoCrop
 
+* Master<br>
+![](http://tc.geta.no/app/rest/builds/buildType:(id:GetaPackages_ImageResizerPluginsAutoCropAutomator_00ci),branch:master/statusIcon)
+
 ## Description
 
 Automatic cropping for images with a flat background.
