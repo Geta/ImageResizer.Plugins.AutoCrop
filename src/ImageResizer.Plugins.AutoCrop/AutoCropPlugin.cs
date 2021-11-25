@@ -121,7 +121,7 @@ namespace ImageResizer.Plugins.AutoCrop
                 var destinationAspect = destinationSize.Width / (float)destinationSize.Height;
                 
                 // Expand the padded box with the calculated final aspect ratio
-                var targetBox = data.TargetDimensions = paddedBox.ForceAspect(destinationAspect);
+                var targetBox = data.TargetDimensions = paddedBox;
                 var scale = destinationSize.Width / (double)targetBox.Width;
                 var originalSize = new Size(bitmap.Width, bitmap.Height);
 
