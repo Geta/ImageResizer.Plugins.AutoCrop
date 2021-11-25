@@ -7,11 +7,11 @@ using System.Drawing.Imaging;
 
 namespace ImageResizer.Plugins.AutoCrop.Analyzers
 {
-    public class BoundsAnalyzer : IAnalyzer
+    public class BoundsAnalyzer : ICropAnalyzer
     {
         private readonly bool _foundBoundingBox;
         private readonly Rectangle _boundingBox;
-        private readonly IAnalysis _analysis;
+        private readonly ICropAnalysis _cropAnalysis;
 
         public BoundsAnalyzer(BitmapData bitmap, int colorThreshold, float bucketTreshold)
         {
@@ -39,7 +39,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             }
             else
             {
-                if (borderInspection.BitsPerPixel == 3)
+                if (borderInspection.BytesPerPixel == 3)
                 {
                     _boundingBox = GetBoundingBoxForContentRgb(bitmap, borderInspection.Rectangle, borderInspection.BackgroundColor, colorThreshold);
                 }
@@ -51,7 +51,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                 _foundBoundingBox = ValidateRectangle(_boundingBox);
             }
 
-            _analysis = new ImageAnalysis
+            _cropAnalysis = new CropAnalysis
             {
                 Background = borderInspection.BackgroundColor,
                 BoundingBox = _boundingBox,
@@ -59,9 +59,9 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             };
         }
 
-        public IAnalysis GetAnalysis()
+        public ICropAnalysis GetAnalysis()
         {
-            return _analysis;
+            return _cropAnalysis;
         }
 
         private bool ValidateRectangle(Rectangle rectangle)
@@ -73,45 +73,67 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             return true;
         }
 
+        /*
+         Bounding box example
+        */
         private unsafe Rectangle GetBoundingBoxForContentRgb(BitmapData bitmap, Rectangle rectangle, Color backgroundColor, int threshold)
         {
+            // Bytes per pixel
             var bpp = Image.GetPixelFormatSize(bitmap.PixelFormat) / 8;
 
-            var h = rectangle.Bottom;
             var w = rectangle.Right;
+            var h = rectangle.Bottom;
+
+            // Stride, scan width.
             var s = bitmap.Stride;
+
+            // Scan0, pointer to first scan.
             var s0 = (byte*)bitmap.Scan0;
 
+            // Calculated x-min
             var xn = w;
+
+            // Calculated x-max
             var xm = rectangle.X;
+
+            // Calculated y-min
             var yn = h;
+
+            // Calculated y-max
             var ym = rectangle.Y;
 
-            unchecked
+            for (var y = rectangle.Y; y < h; y++)
             {
-                for (var y = rectangle.Y; y < h; y++)
+                // Pointer to current scanline
+                var row = s0 + y * s;
+
+                for (var x = rectangle.X; x < w; x++)
                 {
-                    var row = s0 + y * s;
+                    // Pointer to current pixel
+                    var p = x * bpp;
 
-                    for (var x = rectangle.X; x < w; x++)
-                    {
-                        var p = x * bpp;
-                        var b = row[p];
-                        var g = row[p + 1];
-                        var r = row[p + 2];
+                    // Pixels are stored in b,g,r-order
+                    // In this case one byte per color
+                    var b = row[p];
+                    var g = row[p + 1];
+                    var r = row[p + 2];
 
-                        var bd = Math.Abs(b - backgroundColor.B);
-                        var gd = Math.Abs(g - backgroundColor.G);
-                        var rd = Math.Abs(r - backgroundColor.R);
+                    // Delta color values
+                    var bd = Math.Abs(b - backgroundColor.B);
+                    var gd = Math.Abs(g - backgroundColor.G);
+                    var rd = Math.Abs(r - backgroundColor.R);
 
-                        if (0.299 * rd + 0.587 * gd + 0.114 * bd <= threshold)
-                            continue;
+                    // Grayscale operation on color delta
+                    // This is done to properly evaluate if 
+                    // the perceptual differences are above threshold
 
-                        if (x < xn) xn = x;
-                        if (x > xm) xm = x;
-                        if (y < yn) yn = y;
-                        if (y > ym) ym = y;
-                    }
+                    if (0.299 * rd + 0.587 * gd + 0.114 * bd <= threshold)
+                        continue;
+
+                    if (x < xn) xn = x;
+                    if (x > xm) xm = x;
+                    if (y < yn) yn = y;
+                    if (y > ym) ym = y;
                 }
             }
 
@@ -132,39 +154,30 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             var yn = h;
             var ym = rectangle.Y;
 
-            unchecked
+            for (var y = rectangle.Y; y < h; y++)
             {
-                for (var y = rectangle.Y; y < h; y++)
+                var row = s0 + y * s;
+
+                for (var x = rectangle.X; x < w; x++)
                 {
-                    var row = s0 + y * s;
+                    var p = x * bpp;
+                    var b = row[p];
+                    var g = row[p + 1];
+                    var r = row[p + 2];
+                    var a = row[p + 3];
+                    var ac = a * 0.003921568627451;
 
-                    for (var x = rectangle.X; x < w; x++)
-                    {
-                        var p = x * bpp;
-                        var b = row[p];
-                        var g = row[p + 1];
-                        var r = row[p + 2];
-                        var a = row[p + 3];
-                        var ac = a * 0.003921568627451;
+                    var bd = Math.Abs(b - backgroundColor.B) * ac;
+                    var gd = Math.Abs(g - backgroundColor.G) * ac;
+                    var rd = Math.Abs(r - backgroundColor.R) * ac;
 
-                        var bd = Math.Abs(b - backgroundColor.B) * ac;
-                        var gd = Math.Abs(g - backgroundColor.G) * ac;
-                        var rd = Math.Abs(r - backgroundColor.R) * ac;
+                    if (0.299 * rd + 0.587 * gd + 0.114 * bd <= threshold)
+                        continue;
 
-                        if (0.299 * rd + 0.587 * gd + 0.114 * bd <= threshold)
-                        {
-                            var ad = Math.Abs(a - backgroundColor.A);
-                            if (ad < threshold)
-                            {
-                                continue;
-                            }
-                        }                        
-
-                        if (x < xn) xn = x;
-                        if (x > xm) xm = x;
-                        if (y < yn) yn = y;
-                        if (y > ym) ym = y;
-                    }
+                    if (x < xn) xn = x;
+                    if (x > xm) xm = x;
+                    if (y < yn) yn = y;
+                    if (y > ym) ym = y;
                 }
             }
 

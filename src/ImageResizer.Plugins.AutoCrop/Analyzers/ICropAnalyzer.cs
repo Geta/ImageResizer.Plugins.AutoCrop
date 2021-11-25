@@ -2,8 +2,8 @@
 
 namespace ImageResizer.Plugins.AutoCrop.Analyzers
 {
-    public interface IAnalyzer
+    public interface ICropAnalyzer
     {
-        IAnalysis GetAnalysis();
+        ICropAnalysis GetAnalysis();
     }
 }

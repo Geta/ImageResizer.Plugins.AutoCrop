@@ -2,7 +2,7 @@
 
 namespace ImageResizer.Plugins.AutoCrop.Models
 {
-    public class ImageAnalysis : IAnalysis
+    public class CropAnalysis : ICropAnalysis
     {
         public Rectangle BoundingBox { get; set; }
 

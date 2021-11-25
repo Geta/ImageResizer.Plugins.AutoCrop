@@ -2,7 +2,7 @@
 
 namespace ImageResizer.Plugins.AutoCrop.Models
 {
-    public interface IAnalysis
+    public interface ICropAnalysis
     {
         Rectangle BoundingBox { get; }
         Color Background { get; }

@@ -34,30 +34,6 @@ namespace ImageResizer.Plugins.AutoCrop.Extensions
             }
         }
 
-        public static Rectangle Aspect(this Rectangle rectangle, float aspect)
-        {
-            if (rectangle.Equals(Rectangle.Empty)) return rectangle;
-            if (aspect == 0) return rectangle;
-
-            var ta = rectangle.Width / (float)rectangle.Height;
-
-            if (Math.Abs(aspect - ta) < 0.01f)
-                return rectangle;
-
-            if (aspect > ta)
-            {
-                var iw = (int)Math.Ceiling(rectangle.Height * aspect);
-                var p = (int)Math.Ceiling((iw - rectangle.Width) * 0.5f);
-                return Expand(rectangle, p, 0);
-            }
-            else
-            {
-                var ih = (int)Math.Ceiling(rectangle.Width / aspect);
-                var p = (int)Math.Ceiling((ih - rectangle.Height) * 0.5f);
-                return Expand(rectangle, 0, p);
-            }
-        }
-
         public static Rectangle Constrain(this Rectangle rectangle, Rectangle other)
         {
             var xn = Math.Max(rectangle.Left, other.Left);
@@ -91,15 +67,16 @@ namespace ImageResizer.Plugins.AutoCrop.Extensions
         {
             return new Rectangle(rectangle.X + point.X, rectangle.Y + point.Y, rectangle.Width, rectangle.Height);
         }
-
         
-
-        public static Rectangle Expand(this Rectangle rectangle, int paddingX, int paddingY)
+        public static Rectangle Expand(this Rectangle rectangle, int paddingX, int paddingY, PointF weight)
         {
             if (paddingX == 0 && paddingY == 0) return rectangle;
 
-            return new Rectangle(rectangle.X - paddingX, 
-                                 rectangle.Y - paddingY, 
+            var offsetX = paddingX * weight.X;
+            var offsetY = paddingY * weight.Y;
+
+            return new Rectangle(rectangle.X - paddingX + (int)offsetX,
+                                 rectangle.Y - paddingY + (int)offsetY,
                                  rectangle.Width + paddingX * 2, 
                                  rectangle.Height + paddingY * 2);
         }

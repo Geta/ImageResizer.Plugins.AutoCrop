@@ -10,7 +10,7 @@ namespace ImageResizer.Plugins.AutoCrop.Detection
     public class BorderInspector
     {
         public readonly bool Failed;
-        public readonly int BitsPerPixel;
+        public readonly int BytesPerPixel;
         public readonly Color BackgroundColor;
         public readonly float BucketRatio;
         public readonly Rectangle Rectangle;
@@ -21,7 +21,7 @@ namespace ImageResizer.Plugins.AutoCrop.Detection
             if (!bounds.Contains(rectangle))
                 throw new ArgumentException("Rectangle must be inside image bounds", nameof(rectangle));
 
-            BitsPerPixel = Image.GetPixelFormatSize(bitmap.PixelFormat) / 8;
+            BytesPerPixel = Image.GetPixelFormatSize(bitmap.PixelFormat) / 8;
             Rectangle = rectangle;
 
             BorderAnalysis result;
@@ -32,7 +32,7 @@ namespace ImageResizer.Plugins.AutoCrop.Detection
             }
             else
             {
-                switch (BitsPerPixel)
+                switch (BytesPerPixel)
                 {
                     case 4: result = AnalyzeArgb(bitmap, rectangle, colorThreshold, bucketThreshold); break;
                     case 3: result = AnalyzeRgb(bitmap, rectangle, colorThreshold, bucketThreshold); break;
@@ -55,151 +55,163 @@ namespace ImageResizer.Plugins.AutoCrop.Detection
         {
             var h = bitmap.Height;
             var w = bitmap.Width;
+
+            // Stride, scan width.
             var s = bitmap.Stride;
+
+            // Scan0, pointer to first scan.
             var s0 = (byte*)bitmap.Scan0;
 
+            // A list of counted colors found along the rectangle border
             var colors = new Dictionary<Color, int>(colorThreshold);
+
+            // A list of counted color buckets
             var buckets = new Dictionary<int, int>(ColorExtensions.GetMaxColorBuckets());
 
-            unchecked
+            // A loop of pixels along the left edge from top to bottom
+            for (var y = 0; y < h; y++)
             {
-                for (var y = 0; y < h; y++)
+                // Pointer to current scanline
+                var row = s0 + y * s;
+                
+                // Pixels are stored in b,g,r-order
+                // In this case one byte per color
+                var p = rectangle.Left * BytesPerPixel;
+                var b = row[p];
+                var g = row[p + 1];
+                var r = row[p + 2];
+
+                // Create a color value
+                var c = Color.FromArgb(r, g, b);
+                var ce = colors.ContainsKey(c);
+
+                if (ce)
                 {
-                    var row = s0 + y * s;
-                    
-                    var p = rectangle.Left * BitsPerPixel;
-                    var b = row[p];
-                    var g = row[p + 1];
-                    var r = row[p + 2];
-
-                    var c = Color.FromArgb(r, g, b);
-                    var ce = colors.ContainsKey(c);
-
-                    if (ce)
-                    {
-                        colors[c]++;
-                    }
-                    else if (colors.Count < colorThreshold)
-                    {
-                        colors.Add(c, 1);
-                    }
-
-                    if (ce || colors.Count >= colorThreshold)
-                    {
-                        var cb = c.ToColorBucket();
-                        if (buckets.ContainsKey(cb))
-                        {
-                            buckets[cb]++;
-                        }
-                        else
-                        {
-                            buckets.Add(cb, 1);
-                        }
-                    }                    
+                    colors[c]++;
+                }
+                else if (colors.Count < colorThreshold)
+                {
+                    colors.Add(c, 1);
                 }
 
-                for (var y = 0; y < h; y++)
+                if (ce || colors.Count >= colorThreshold)
                 {
-                    var row = s0 + y * s;
+                    var cb = c.ToColorBucket();
+                    if (buckets.ContainsKey(cb))
+                    {
+                        buckets[cb]++;
+                    }
+                    else
+                    {
+                        buckets.Add(cb, 1);
+                    }
+                }                    
+            }
+
+            // A loop of pixels along the right edge from top to bottom
+            for (var y = 0; y < h; y++)
+            {
+                var row = s0 + y * s;
                     
-                    var p = (rectangle.Right - 1) * BitsPerPixel;
-                    var b = row[p];
-                    var g = row[p + 1];
-                    var r = row[p + 2];
+                var p = (rectangle.Right - 1) * BytesPerPixel;
+                var b = row[p];
+                var g = row[p + 1];
+                var r = row[p + 2];
 
-                    var c = Color.FromArgb(r, g, b);
-                    var ce = colors.ContainsKey(c);
+                var c = Color.FromArgb(r, g, b);
+                var ce = colors.ContainsKey(c);
 
-                    if (ce)
-                    {
-                        colors[c]++;
-                    }
-                    else if (colors.Count < colorThreshold)
-                    {
-                        colors.Add(c, 1);
-                    }
-
-                    if (ce || colors.Count >= colorThreshold)
-                    {
-                        var cb = c.ToColorBucket();
-                        if (buckets.ContainsKey(cb))
-                        {
-                            buckets[cb]++;
-                        }
-                        else
-                        {
-                            buckets.Add(cb, 1);
-                        }
-                    }
+                if (ce)
+                {
+                    colors[c]++;
+                }
+                else if (colors.Count < colorThreshold)
+                {
+                    colors.Add(c, 1);
                 }
 
-                for (var x = 0; x < w; x++)
+                if (ce || colors.Count >= colorThreshold)
                 {
-                    var row = s0 + rectangle.Top * s;
-                    
-                    var p = x * BitsPerPixel;
-                    var b = row[p];
-                    var g = row[p + 1];
-                    var r = row[p + 2];
-
-                    var c = Color.FromArgb(r, g, b);
-                    var ce = colors.ContainsKey(c);
-
-                    if (ce)
+                    var cb = c.ToColorBucket();
+                    if (buckets.ContainsKey(cb))
                     {
-                        colors[c]++;
+                        buckets[cb]++;
                     }
-                    else if (colors.Count < colorThreshold)
+                    else
                     {
-                        colors.Add(c, 1);
-                    }
-
-                    if (ce || colors.Count >= colorThreshold)
-                    {
-                        var cb = c.ToColorBucket();
-                        if (buckets.ContainsKey(cb))
-                        {
-                            buckets[cb]++;
-                        }
-                        else
-                        {
-                            buckets.Add(cb, 1);
-                        }
+                        buckets.Add(cb, 1);
                     }
                 }
+            }
 
-                for (var x = 0; x < w; x++)
-                {
-                    var row = s0 + (rectangle.Bottom - 1) * s;
+            // A loop of pixels along the top edge from left to right
+            for (var x = 0; x < w; x++)
+            {
+                var row = s0 + rectangle.Top * s;
                     
-                    var p = x * BitsPerPixel;
-                    var b = row[p];
-                    var g = row[p + 1];
-                    var r = row[p + 2];
+                var p = x * BytesPerPixel;
+                var b = row[p];
+                var g = row[p + 1];
+                var r = row[p + 2];
 
-                    var c = Color.FromArgb(r, g, b);
-                    var ce = colors.ContainsKey(c);
+                var c = Color.FromArgb(r, g, b);
+                var ce = colors.ContainsKey(c);
 
-                    if (ce)
+                if (ce)
+                {
+                    colors[c]++;
+                }
+                else if (colors.Count < colorThreshold)
+                {
+                    colors.Add(c, 1);
+                }
+
+                if (ce || colors.Count >= colorThreshold)
+                {
+                    var cb = c.ToColorBucket();
+                    if (buckets.ContainsKey(cb))
                     {
-                        colors[c]++;
+                        buckets[cb]++;
                     }
-                    else if (colors.Count < colorThreshold)
+                    else
                     {
-                        colors.Add(c, 1);
+                        buckets.Add(cb, 1);
                     }
+                }
+            }
 
-                    if (ce || colors.Count >= colorThreshold)
+            // A loop of pixels along the bottom edge from left to right
+            for (var x = 0; x < w; x++)
+            {
+                var row = s0 + (rectangle.Bottom - 1) * s;
+                    
+                var p = x * BytesPerPixel;
+                var b = row[p];
+                var g = row[p + 1];
+                var r = row[p + 2];
+
+                var c = Color.FromArgb(r, g, b);
+                var ce = colors.ContainsKey(c);
+
+                if (ce)
+                {
+                    colors[c]++;
+                }
+                else if (colors.Count < colorThreshold)
+                {
+                    colors.Add(c, 1);
+                }
+
+                if (ce || colors.Count >= colorThreshold)
+                {
+                    var cb = c.ToColorBucket();
+                    if (buckets.ContainsKey(cb))
                     {
-                        var cb = c.ToColorBucket();
-                        if (buckets.ContainsKey(cb))
-                        {
-                            buckets[cb]++;
-                        }
-                        else
-                        {
-                            buckets.Add(cb, 1);
-                        }
+                        buckets[cb]++;
+                    }
+                    else
+                    {
+                        buckets.Add(cb, 1);
                     }
                 }
             }
@@ -223,7 +235,7 @@ namespace ImageResizer.Plugins.AutoCrop.Detection
                 {
                     var row = s0 + y * s;
 
-                    var p = rectangle.Left * BitsPerPixel;
+                    var p = rectangle.Left * BytesPerPixel;
                     var b = row[p];
                     var g = row[p + 1];
                     var r = row[p + 2];
@@ -259,7 +271,7 @@ namespace ImageResizer.Plugins.AutoCrop.Detection
                 {
                     var row = s0 + y * s;
                     
-                    var p = (rectangle.Right - 1) * BitsPerPixel;
+                    var p = (rectangle.Right - 1) * BytesPerPixel;
                     var b = row[p];
                     var g = row[p + 1];
                     var r = row[p + 2];
@@ -295,7 +307,7 @@ namespace ImageResizer.Plugins.AutoCrop.Detection
                 {
                     var row = s0 + rectangle.Top * s;
 
-                    var p = x * BitsPerPixel;
+                    var p = x * BytesPerPixel;
                     var b = row[p];
                     var g = row[p + 1];
                     var r = row[p + 2];
@@ -331,7 +343,7 @@ namespace ImageResizer.Plugins.AutoCrop.Detection
                 {
                     var row = s0 + (rectangle.Bottom - 1) * s;
 
-                    var p = x * BitsPerPixel;
+                    var p = x * BytesPerPixel;
                     var b = row[p];
                     var g = row[p + 1];
                     var r = row[p + 2];
