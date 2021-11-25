@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0]
+
+### Changed
+- Removed forced aspect ratio (may affect cropping of all images).
+- Added optical weighting of crop.
+
 ## [2.1.1]
 
 ### Changed

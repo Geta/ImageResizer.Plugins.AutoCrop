@@ -9,17 +9,21 @@ namespace ImageResizer.Plugins.AutoCrop.Models
         public readonly Rectangle OriginalDimensions;
         public Rectangle TargetDimensions;
         public Size Padding;
+        public PointF Weight;
         public int BytesPerPixel;
 
         public bool ShouldPreRender;
         public RenderInstructions Instructions;        
 
-        public AutoCropState(IAnalysis analysis, Bitmap bitmap)
+        public AutoCropState(Bitmap bitmap, ICropAnalysis cropAnalysis = null, IWeightAnalysis weightAnalysis = null)
         {
-            Bounds = analysis.BoundingBox;
+            var originalDimensions = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
+
             BytesPerPixel = Image.GetPixelFormatSize(bitmap.PixelFormat) / 8;
-            BorderColor = analysis.Background;
-            OriginalDimensions = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
+            BorderColor = cropAnalysis?.Background ?? Color.White;
+            Weight = weightAnalysis?.Weight ?? new PointF(0, 0);
+            Bounds = cropAnalysis?.BoundingBox ?? originalDimensions;
+            OriginalDimensions = originalDimensions;
         }
     }
 }

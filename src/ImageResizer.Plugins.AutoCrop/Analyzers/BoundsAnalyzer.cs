@@ -7,11 +7,11 @@ using System.Drawing.Imaging;
 
 namespace ImageResizer.Plugins.AutoCrop.Analyzers
 {
-    public class BoundsAnalyzer : IAnalyzer
+    public class BoundsAnalyzer : ICropAnalyzer
     {
         private readonly bool _foundBoundingBox;
         private readonly Rectangle _boundingBox;
-        private readonly IAnalysis _analysis;
+        private readonly ICropAnalysis _cropAnalysis;
 
         public BoundsAnalyzer(BitmapData bitmap, int colorThreshold, float bucketTreshold)
         {
@@ -51,7 +51,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                 _foundBoundingBox = ValidateRectangle(_boundingBox);
             }
 
-            _analysis = new ImageAnalysis
+            _cropAnalysis = new CropAnalysis
             {
                 Background = borderInspection.BackgroundColor,
                 BoundingBox = _boundingBox,
@@ -59,9 +59,9 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             };
         }
 
-        public IAnalysis GetAnalysis()
+        public ICropAnalysis GetAnalysis()
         {
-            return _analysis;
+            return _cropAnalysis;
         }
 
         private bool ValidateRectangle(Rectangle rectangle)
@@ -172,13 +172,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
                     var rd = Math.Abs(r - backgroundColor.R) * ac;
 
                     if (0.299 * rd + 0.587 * gd + 0.114 * bd <= threshold)
-                    {
-                        var ad = Math.Abs(a - backgroundColor.A);
-                        if (ad < threshold)
-                        {
-                            continue;
-                        }
-                    }                        
+                        continue;
 
                     if (x < xn) xn = x;
                     if (x > xm) xm = x;

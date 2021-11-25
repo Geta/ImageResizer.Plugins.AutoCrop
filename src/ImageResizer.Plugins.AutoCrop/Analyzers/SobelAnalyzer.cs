@@ -8,13 +8,13 @@ using System.Drawing.Imaging;
 
 namespace ImageResizer.Plugins.AutoCrop.Analyzers
 {
-    public class SobelAnalyzer : IAnalyzer
+    public class SobelAnalyzer : ICropAnalyzer
     {
         private const int _thumbnailSize = 256;
 
         private readonly bool _foundBoundingBox;
         private readonly Rectangle _boundingBox;
-        private readonly IAnalysis _analysis;
+        private readonly ICropAnalysis _analysis;
 
         public SobelAnalyzer(BitmapData bitmap, int sobelThreshold, float bucketTreshold)
         {
@@ -56,7 +56,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             features.Dispose();
             thumbnail.Dispose();
 
-            _analysis = new ImageAnalysis
+            _analysis = new CropAnalysis
             {
                 Success = _foundBoundingBox,
                 BoundingBox = _boundingBox,
@@ -64,7 +64,7 @@ namespace ImageResizer.Plugins.AutoCrop.Analyzers
             };
         }        
 
-        public IAnalysis GetAnalysis()
+        public ICropAnalysis GetAnalysis()
         {
             return _analysis;
         }

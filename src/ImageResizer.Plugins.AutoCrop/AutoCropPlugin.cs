@@ -58,29 +58,41 @@ namespace ImageResizer.Plugins.AutoCrop
 
             state.Data[SettingsKey] = settings;
 
+            var cropAnalysis = (ICropAnalysis)null;
+            var weightAnalysis = (IWeightAnalysis)null;
+
             try
             {
                 // Lock memory range for bitmap for read purposes
                 data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, bitmap.PixelFormat);
 
                 // Get analyzer depending on settings
-                var analyzer = GetAnalyzer(data, settings);
+                var cropAnalyzer = GetCropAnalyzer(data, settings);                
 
                 // The analyzer determines if the image is croppable...
                 // ...also which area of the image to scan
-                var analysis = analyzer.GetAnalysis();
-
-                if (analysis.Success)
-                {
-                    // Add an AutoCropState for later use
-                    state.Data[DataKey] = new AutoCropState(analysis, bitmap);
-                }
+                cropAnalysis = cropAnalyzer.GetAnalysis();
             }
             finally
             {
                 // Unlock memory access
                 if (data != null)
                     bitmap.UnlockBits(data);
+            }
+
+            if (cropAnalysis?.Success ?? false)
+            {
+                try
+                {
+                    // Analyze optical weight of image for later nudge adjustment
+                    var weightAnalyzer = new WeightAnalyzer(bitmap, cropAnalysis.Background);
+                    weightAnalysis = weightAnalyzer.GetAnalysis();
+                }
+                finally
+                {
+                    // Add an AutoCropState for later use
+                    state.Data[DataKey] = new AutoCropState(bitmap, cropAnalysis, weightAnalysis);
+                }
             }
 
             return RequestedAction.None;
@@ -111,7 +123,7 @@ namespace ImageResizer.Plugins.AutoCrop
                 data.Padding = new Size(paddingX, paddingY);
 
                 // Pad the analyzed crop bounds
-                var paddedBox = bounds.Expand(paddingX, paddingY);
+                var paddedBox = bounds.Expand(paddingX, paddingY, data.Weight);
 
                 // Returns target size if both widht/height resize paramters are set
                 // Returns source size if only one (e.g. width)
@@ -370,7 +382,7 @@ namespace ImageResizer.Plugins.AutoCrop
             }
         }
 
-        protected virtual IAnalyzer GetAnalyzer(BitmapData data, AutoCropSettings settings)
+        protected virtual ICropAnalyzer GetCropAnalyzer(BitmapData data, AutoCropSettings settings)
         {
             if (settings.Method == AutoCropMethod.Edge)
                 return new SobelAnalyzer(data, settings.Threshold, 0.945f);
