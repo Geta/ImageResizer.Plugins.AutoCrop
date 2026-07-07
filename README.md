@@ -1,7 +1,7 @@
 # ImageResizer.Plugins.AutoCrop
 
 * Master<br>
-![](http://tc.geta.no/app/rest/builds/buildType:(id:GetaPackages_ImageResizerPluginsAutoCropAutomator_00ci),branch:master/statusIcon)
+![](http://teamcity.getatools.ai/app/rest/builds/buildType:(id:GetaPackages_ImageResizerPluginsAutoCropAutomator_00ci),branch:master/statusIcon)
 
 ## Description
 
